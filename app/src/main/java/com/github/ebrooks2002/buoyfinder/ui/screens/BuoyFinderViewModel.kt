@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 import retrofit2.HttpException
 import android.location.Location
-import com.github.ebrooks2002.buoyfinder.Location.LocationFinder
+import com.github.ebrooks2002.buoyfinder.location.LocationFinder
 
 sealed interface BuoyFinderUiState {
     data class Success(val assetData: AssetData) : BuoyFinderUiState
