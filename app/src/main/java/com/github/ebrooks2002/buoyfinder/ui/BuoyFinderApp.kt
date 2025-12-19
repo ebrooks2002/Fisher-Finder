@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.github.ebrooks2002.buoyfinder.ui.screens.BuoyFinderViewModel
 import com.github.ebrooks2002.buoyfinder.ui.screens.HomeScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -15,10 +16,12 @@ fun BuoyFinderApp() {
         modifier = Modifier.fillMaxSize()
     ) {
         val buoyFinderViewModel: BuoyFinderViewModel = viewModel()
-
+        val context = LocalContext.current
         HomeScreen(
             buoyFinderUiState = buoyFinderViewModel.buoyFinderUiState,
-            onGetDataClicked = { buoyFinderViewModel.getAssetData() }
+            onGetDataClicked = { buoyFinderViewModel.getAssetData()},
+            userLocation = buoyFinderViewModel.userLocation,
+            onStartLocationUpdates = {buoyFinderViewModel.startLocationTracking(context)}
         )
     }
 }

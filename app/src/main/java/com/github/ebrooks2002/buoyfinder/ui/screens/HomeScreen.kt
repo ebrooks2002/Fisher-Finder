@@ -43,28 +43,63 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.RectangleShape
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import android.location.Location
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 @Composable
 fun HomeScreen(
     buoyFinderUiState: BuoyFinderUiState,
     onGetDataClicked: () -> Unit,
     modifier: Modifier = Modifier,
+    userLocation: Location?,
+    onStartLocationUpdates: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        if (fineLocationGranted || coarseLocationGranted) {
+            onStartLocationUpdates()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        locationPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+
 
     when (buoyFinderUiState) {
         is BuoyFinderUiState.Loading -> LoadingScreen()
         is BuoyFinderUiState.Success -> ResultScreen(
             buoyFinderUiState.assetData,
-            onGetDataClicked
+            onGetDataClicked,
+            userLocation = userLocation
         )
         is BuoyFinderUiState.Error -> ErrorScreen()
     }
+
+
 }
 
 @Composable
 fun ResultScreen(assetData: AssetData,
                  onGetDataClicked: () -> Unit,
-                 modifier: Modifier = Modifier) {
+                 modifier: Modifier = Modifier,
+                 userLocation: Location?) {
+
     val messages = assetData.feedMessageResponse?.messages?.list ?: emptyList()
     val uniqueAssets = messages.mapNotNull { it.messengerName }.distinct().sorted()
     var selectedAssetName by remember { mutableStateOf(uniqueAssets.firstOrNull()) }
@@ -76,6 +111,28 @@ fun ResultScreen(assetData: AssetData,
         "Position not available"
     }
     val dateTime = selectedMessage?.dateTime ?: "Time not available"
+
+    var gpsInfo = "Waiting for GPS..."
+    if (userLocation != null && selectedMessage != null) {
+        // Create a Location object for the Buoy to do math
+        val buoyLocation = Location("Buoy").apply {
+            latitude = selectedMessage.latitude
+            longitude = selectedMessage.longitude
+        }
+
+        // 1. Distance (Meters -> Kilometers)
+        val distanceMeters = userLocation.distanceTo(buoyLocation)
+        val distanceKm = distanceMeters / 1000
+
+        // 2. Bearing (Direction to travel)
+        // returns degrees East of true North
+        val bearingToBuoy = userLocation.bearingTo(buoyLocation)
+
+        // 3. User Heading (Direction you are moving)
+        val myHeading = userLocation.bearing
+
+        gpsInfo = "Dist: %.2f km\nBear: %.0f° | Head: %.0f°".format(distanceKm, bearingToBuoy, myHeading)
+    }
     Box(modifier = Modifier.fillMaxSize()) {
 
         // 1. TOP BAR ROW (Holds both buttons)
@@ -101,12 +158,15 @@ fun ResultScreen(assetData: AssetData,
         }
 
         // 2. ASSET DATA DISPLAY (Middle of screen)
-        DisplayAssetData(assetName, position, dateTime)
+        DisplayAssetData(assetName, position, dateTime, gpsInfo)
     }
 }
 
 @Composable
-fun DisplayAssetData(assetName: String, position: String, dateTime: String) {
+fun DisplayAssetData(assetName: String,
+                     position: String,
+                     dateTime: String,
+                     gpsInfo: String? = null) {
     Box(
         modifier = Modifier.fillMaxSize(),
         Alignment.TopCenter
@@ -114,7 +174,7 @@ fun DisplayAssetData(assetName: String, position: String, dateTime: String) {
     ) {
         Column(
             modifier = Modifier
-                .padding(top=150.dp)
+                .padding(top = 150.dp)
                 .wrapContentHeight()
                 .fillMaxWidth(0.95F)
                 .border(width = 2.dp, color = Color.Black),
@@ -122,22 +182,37 @@ fun DisplayAssetData(assetName: String, position: String, dateTime: String) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier
+                    .padding(12.dp)
                     .fillMaxWidth(),
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 text = "Asset: $assetName " // Updated label
             )
             Text(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier
+                    .padding(12.dp)
                     .fillMaxWidth(),
                 fontSize = 24.sp, text = position
             )
             Text(
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier
+                    .padding(12.dp)
                     .fillMaxWidth(),
                 fontSize = 24.sp, text = dateTime
             )
+            if (gpsInfo != null) {
+                Text(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .fillMaxWidth(),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF006400), // Dark Green color
+                    text = gpsInfo
+                )
+            }
+
         }
     }
 }
@@ -227,8 +302,15 @@ fun HomeScreenPreview() {
         androidx.compose.material3.Surface(
             modifier = Modifier.fillMaxSize()
         ) {
+            val viewModel: BuoyFinderViewModel = viewModel()
+            val context = LocalContext.current
             HomeScreen(
-                buoyFinderUiState = BuoyFinderUiState.Success(AssetData()), onGetDataClicked = {}
+                buoyFinderUiState = BuoyFinderUiState.Success(AssetData()),
+                onGetDataClicked = {viewModel.getAssetData()},
+                userLocation = viewModel.userLocation,
+                onStartLocationUpdates = {
+                    viewModel.startLocationTracking(context)
+                }
 
             )
         }
