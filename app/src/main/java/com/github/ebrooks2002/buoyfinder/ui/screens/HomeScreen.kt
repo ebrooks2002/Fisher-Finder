@@ -5,7 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,8 +52,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import android.location.Location
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Surface
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorManager
 
 @Composable
 fun HomeScreen(
@@ -152,7 +160,6 @@ fun ResultScreen(assetData: AssetData,
             latitude = selectedMessage.latitude
             longitude = selectedMessage.longitude
         }
-
         // 1. Distance (Meters -> Kilometers)
         val distanceMeters = userLocation.distanceTo(buoyLocation)
         val distanceKm = distanceMeters / 1000
@@ -166,13 +173,13 @@ fun ResultScreen(assetData: AssetData,
 
         gpsInfo = "%.2f km from tracker\nBear: %.0f° \nHead: %.0f°".format(distanceKm, bearingToBuoy, myHeading)
     }
-    Box(modifier = Modifier.fillMaxSize()) {
-
+    Column(modifier = Modifier.fillMaxSize()
+        .verticalScroll(rememberScrollState())
+    ) {
         // 1. TOP BAR ROW (Holds both buttons)
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter) // Place row at the top
+                .fillMaxWidth() // Place row at the top
                 .padding(top = 25.dp, start = 16.dp, end = 16.dp), // Global padding
             horizontalArrangement = Arrangement.SpaceBetween, // Pushes items to edges
             verticalAlignment = Alignment.CenterVertically
@@ -191,6 +198,7 @@ fun ResultScreen(assetData: AssetData,
         }
         // 2. ASSET DATA DISPLAY (Middle of screen)
         DisplayAssetData(assetName, position, outputDateFormat = formattedDate, outputTimeFormat = formattedTime, gpsInfo)
+
     }
 }
 
@@ -200,14 +208,9 @@ fun DisplayAssetData(assetName: String,
                      outputDateFormat: String,
                      outputTimeFormat: String,
                      gpsInfo: String? = null) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        Alignment.TopCenter
-
-    ) {
         Column(
             modifier = Modifier
-                .padding(top = 150.dp)
+                .padding(top = 20.dp)
                 .wrapContentHeight()
                 .fillMaxWidth(0.95F),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -265,7 +268,7 @@ fun DisplayAssetData(assetName: String,
 
         }
     }
-}
+
 
 @Composable
 fun RefreshFeedButton(
@@ -274,7 +277,8 @@ fun RefreshFeedButton(
     {
        Button(
            onClick = onGetDataClicked,
-           modifier = Modifier.padding(top=50.dp, end=10.dp)
+           modifier = Modifier.padding(top=40.dp, end=8.dp),
+           colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF453563))
        ) {
            Text(text = "Refresh",
                maxLines = 1)
@@ -289,8 +293,10 @@ fun DropDownMenu(
     var expanded by remember { mutableStateOf(false) }
 
     // The container for the Menu
-    Box(modifier = Modifier.padding(top = 50.dp, start = 30.dp)) { // Adjust this padding to move it up/down
-        Button(onClick = { expanded = true }) {
+    Box(modifier = Modifier.padding(top = 40.dp, start = 5.dp)) { // Adjust this padding to move it up/down
+        Button(onClick = { expanded = true },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF453563))
+        ) {
             Text(text = currentSelection ?: "Select Asset")
             Icon(
                 imageVector = Icons.Filled.ArrowDropDown, contentDescription = null
@@ -338,6 +344,7 @@ fun LoadingScreen(modifier: Modifier = Modifier) {
     }
 }
 
+
 @Preview(
     showBackground = true,       // 1. Adds a white background
     showSystemUi = true,         // 2. Adds status bar and nav bar
@@ -346,8 +353,8 @@ fun LoadingScreen(modifier: Modifier = Modifier) {
 @Composable
 fun HomeScreenPreview() {
     // 4. Wrap in your Theme and Surface to mimic the real app environment
-    com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme {
-        androidx.compose.material3.Surface(
+    BuoyFinderTheme {
+        Surface(
             modifier = Modifier.fillMaxSize()
         ) {
             val viewModel: BuoyFinderViewModel = viewModel()
