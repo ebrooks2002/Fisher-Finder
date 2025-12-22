@@ -11,5 +11,7 @@ Users can get started using the app by downloading it from the 'Releases' sectio
 
 Here's what that looks like:
 
-![buoyfinderscreenshot](https://github.com/user-attachments/assets/d91ec712-0f5b-4099-8b1a-164e8259d935)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/d91ec712-0f5b-4099-8b1a-164e8259d935" width="300" height="600" alt="Buoy Finder Screenshot">
+</p>
 
