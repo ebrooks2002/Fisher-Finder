@@ -3,6 +3,9 @@ package com.github.ebrooks2002.buoyfinder.model
 import org.simpleframework.xml.Element
 import org.simpleframework.xml.ElementList
 import org.simpleframework.xml.Root
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 @Root(name = "message", strict = false)
 data class Message(
@@ -48,8 +51,36 @@ data class Message(
     // Keep this optional as it appears in some messages but not your current STOP message
     @field:Element(name = "messageContent", required = false)
     var messageContent: String = ""
-)
+) {
+    private fun parseDate(): java.util.Date? {
+        return if (dateTime.isNotBlank()) {
+            try {
+                // Input format from SPOT API (e.g., 2025-12-12T21:36:42+0000)
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US).parse(dateTime)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
 
+    val formattedDate: String
+        get() {
+            val date = parseDate() ?: return "Date not available"
+            val formatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+            formatter.timeZone = TimeZone.getTimeZone("Africa/Accra") // Ghana Time
+            return formatter.format(date)
+        }
+
+    val formattedTime: String
+        get() {
+            val date = parseDate() ?: return "Time not available"
+            val formatter = SimpleDateFormat("HH:mm", Locale.getDefault()) // Military Time
+            formatter.timeZone = TimeZone.getTimeZone("Africa/Accra") // Ghana Time
+            return "${formatter.format(date)} GMT"
+        }
+}
 
 @Root(name = "messages", strict = false)
 data class Messages(

@@ -31,7 +31,6 @@ class LocationFinder(private val context: Context) {
             }
 
             client.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
-
             // Clean up when we stop listening
             awaitClose {
                 client.removeLocationUpdates(locationCallback)

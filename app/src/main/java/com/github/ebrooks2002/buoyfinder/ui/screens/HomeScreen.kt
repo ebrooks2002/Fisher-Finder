@@ -134,9 +134,9 @@ fun ResultScreen(assetData: AssetData,
     } else {
         "Position not available"
     }
-    val rawDateTime = selectedMessage?.dateTime
 
-    val (formattedDate, formattedTime) = formatMessageDate(rawDateTime)
+    val formattedDate =  selectedMessage?.formattedDate ?: "Date not available"
+    val formattedTime = selectedMessage?.formattedTime ?: "Time not available"
 
     var gpsInfo = "Waiting for GPS..."
     if (userLocation != null && selectedMessage != null) {
@@ -202,9 +202,8 @@ fun ResultScreen(assetData: AssetData,
         }
         if (error) {
             displayRefreshMessage(color=Color.Red, message="Offline - Showing last known data")
-
         }
-        // 2. ASSET DATA DISPLAY (Middle of screen)
+
         DisplayAssetData(assetName, position, outputDateFormat = formattedDate, outputTimeFormat = formattedTime, gpsInfo)
     }
 }
@@ -301,7 +300,6 @@ fun DropDownMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    // The container for the Menu
     Box(modifier = Modifier.padding(top = 40.dp, start = 5.dp)) { // Adjust this padding to move it up/down
         Button(onClick = { expanded = true },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF453563))
@@ -323,8 +321,7 @@ fun DropDownMenu(
     }
 }
 @Composable
-fun ErrorLoadingMessage(modifier: Modifier = Modifier,
-                        message: String) {
+fun ErrorLoadingMessage(modifier: Modifier = Modifier, message: String) {
     Box(
         modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
@@ -398,7 +395,3 @@ fun HomeScreenPreview() {
         }
     }
 }
-
-
-
-
