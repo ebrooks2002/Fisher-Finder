@@ -99,11 +99,10 @@ fun HomeScreen(
 
     if (currentAssetData != null) {
         ResultScreen(
-            assetData = currentAssetData!!, // This is where the variable comes from
+            assetData = currentAssetData!!,
             onGetDataClicked = onGetDataClicked,
             userLocation = userLocation,
             userRotation = userRotation,
-            // Pass true if we are currently loading or in error state
             loading = buoyFinderUiState is BuoyFinderUiState.Loading,
             error = buoyFinderUiState is BuoyFinderUiState.Error
         )
@@ -112,13 +111,10 @@ fun HomeScreen(
         when (buoyFinderUiState) {
             is BuoyFinderUiState.Loading -> ErrorLoadingMessage(message="Loading")
             is BuoyFinderUiState.Error -> ErrorLoadingMessage(message="Error Fetching Data")
-            else -> {} // Success is handled above
+            else -> {}
         }
     }
 }
-
-
-
 @Composable
 fun ResultScreen(assetData: AssetData,
                  onGetDataClicked: () -> Unit,
@@ -200,6 +196,7 @@ fun ResultScreen(assetData: AssetData,
             Spacer(modifier = Modifier.width(8.dp))
             RefreshFeedButton(onGetDataClicked = onGetDataClicked)
             }
+
         if (loading) {
             displayRefreshMessage(color=Color.Gray, message="Refreshing data...")
         }
@@ -211,7 +208,6 @@ fun ResultScreen(assetData: AssetData,
         DisplayAssetData(assetName, position, outputDateFormat = formattedDate, outputTimeFormat = formattedTime, gpsInfo)
     }
 }
-
 @Composable
 fun displayRefreshMessage(color: Color, message: String) {
     Text(
@@ -222,7 +218,6 @@ fun displayRefreshMessage(color: Color, message: String) {
         modifier = Modifier.fillMaxWidth().padding(4.dp)
     )
 }
-
 @Composable
 fun DisplayAssetData(assetName: String,
                      position: String,
@@ -285,7 +280,6 @@ fun DisplayAssetData(assetName: String,
             }
         }
     }
-
 @Composable
 fun RefreshFeedButton(
     onGetDataClicked: () -> Unit,
@@ -300,7 +294,6 @@ fun RefreshFeedButton(
                maxLines = 1)
        }
 }
-
 @Composable
 fun DropDownMenu(
     availableAssets: List<String>, onAssetSelected: (String) -> Unit, currentSelection: String?,
@@ -329,7 +322,6 @@ fun DropDownMenu(
         }
     }
 }
-
 @Composable
 fun ErrorLoadingMessage(modifier: Modifier = Modifier,
                         message: String) {
@@ -345,7 +337,6 @@ fun ErrorLoadingMessage(modifier: Modifier = Modifier,
         )
     }
 }
-
 private fun formatMessageDate(rawDateTime: String?): Pair<String, String> {
 
     if (rawDateTime.isNullOrBlank()) {

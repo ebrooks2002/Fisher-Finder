@@ -29,6 +29,7 @@ class BuoyFinderViewModel : ViewModel(){
     public var userRotation: Float? by mutableStateOf(null)
         private set
 
+    private val locUpdateInterval = 3000L // User location update interval length in milliseconds.
 
     fun startRotationTracking(context: android.content.Context) {
         val rotationClient = RotationSensor(context)
@@ -38,12 +39,11 @@ class BuoyFinderViewModel : ViewModel(){
             }
         }
     }
-
     fun startLocationTracking(context: android.content.Context) {
         val locationClient = LocationFinder(context)
         viewModelScope.launch {
             // Update every 2 seconds (2000ms)
-            locationClient.getLocationUpdates(2000L).collect { location ->
+            locationClient.getLocationUpdates(locUpdateInterval).collect { location ->
                 userLocation = location
             }
         }

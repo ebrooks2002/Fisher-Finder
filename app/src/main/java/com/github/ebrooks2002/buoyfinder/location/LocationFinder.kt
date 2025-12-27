@@ -12,7 +12,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-
 class LocationFinder(private val context: Context) {
     private val client = LocationServices.getFusedLocationProviderClient(context)
 
