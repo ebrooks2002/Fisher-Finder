@@ -14,7 +14,7 @@ still see their own location using their phones GPS receiver.
 
 3. If prompted, allow "Install from Unknown Sources" in your browser or file manager settings.
 
-4. If a "Play Protect" warning appears, click "Install Anyway."
+4. If a "Play Protect" warning appears, click "Install Without Scanning" or "Scan with Google"
 
 Here's what the app should look like:
 
