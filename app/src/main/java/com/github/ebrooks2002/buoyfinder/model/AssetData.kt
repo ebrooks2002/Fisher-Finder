@@ -143,7 +143,6 @@ data class AssetData(
     var errors: ApiErrors? = null
 )
 
-// Optional: Error classes to handle E-0195 cases
 @Root(name = "errors", strict = false)
 data class ApiErrors(
     @field:Element(name = "error", required = false)

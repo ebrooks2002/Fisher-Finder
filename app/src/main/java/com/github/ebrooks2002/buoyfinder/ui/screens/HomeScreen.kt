@@ -1,5 +1,12 @@
-package com.github.ebrooks2002.buoyfinder.ui.screens
+/**
+ * @author Ethan Brooks
+ * The main screen of the Buoy Finder app.
+ * Creates UI elements using composable functions to display:
+ * List of tracked assets, refresh button, asset data, user distance and heading assets,
+ * and error/loading messages.
+ */
 
+package com.github.ebrooks2002.buoyfinder.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,16 +42,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import android.location.Location
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults.cardColors
@@ -52,7 +55,6 @@ import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.material3.Surface
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme
-
 
 @Composable
 fun HomeScreen(
@@ -87,7 +89,6 @@ fun HomeScreen(
         )
     }
 
-    // handles offline persistence
     var currentAssetData by remember { mutableStateOf<AssetData?>(null) }
 
     if (buoyFinderUiState is BuoyFinderUiState.Success) {
@@ -165,7 +166,6 @@ fun ResultScreen(assetData: AssetData,
     Column(modifier = Modifier.fillMaxSize()
         .verticalScroll(rememberScrollState())
     ) {
-        // 1. TOP BAR ROW (Holds both buttons)
         Row(
             modifier = Modifier
                 .fillMaxWidth() // Place row at the top
@@ -174,7 +174,6 @@ fun ResultScreen(assetData: AssetData,
             verticalAlignment = Alignment.CenterVertically
         )
         {
-            // Pass modifier weight(1f) to dropdown if you want it to shrink if text is huge
             DropDownMenu(
                 availableAssets = uniqueAssets,
                 onAssetSelected = { newName -> selectedAssetName = newName },
@@ -183,7 +182,6 @@ fun ResultScreen(assetData: AssetData,
             Spacer(modifier = Modifier.width(8.dp))
             RefreshFeedButton(onGetDataClicked = onGetDataClicked)
             }
-
         if (loading) {
             DisplayRefreshMessage(color=Color.Gray, message="Refreshing data...")
         }
@@ -232,7 +230,7 @@ fun DisplayAssetData(assetName: String,
                         .fillMaxWidth(),
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
-                    text = "Tracker: $assetName " // Updated label
+                    text = "Tracker: $assetName "
                 )
                 Text(
                     modifier = Modifier
@@ -276,18 +274,19 @@ fun DisplayAssetData(assetName: String,
         }
     }
 @Composable
-fun RefreshFeedButton(
-    onGetDataClicked: () -> Unit,
-)
-    {
+fun RefreshFeedButton(onGetDataClicked: () -> Unit, ) {
        Button(
            onClick = onGetDataClicked,
            modifier = Modifier.padding(top=40.dp, end=8.dp),
            colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583))
-       ) {
-           Text(text = "Refresh",
-               maxLines = 1)
+       )
+       {
+           Text(
+               text = "Refresh",
+               maxLines = 1
+           )
        }
+
 }
 @Composable
 fun DropDownMenu(
@@ -331,15 +330,13 @@ fun ErrorLoadingMessage(modifier: Modifier = Modifier, message: String) {
     }
 }
 
-
 @Preview(
-    showBackground = true,       // 1. Adds a white background
-    showSystemUi = true,         // 2. Adds status bar and nav bar
-    device = "id:pixel_5"        // 3. Sets specific device dimensions (optional but helpful)
+    showBackground = true,
+    showSystemUi = true,
+    device = "id:pixel_5"
 )
 @Composable
 fun HomeScreenPreview() {
-    // 4. Wrap in your Theme and Surface to mimic the real app environment
     BuoyFinderTheme {
         Surface(
             modifier = Modifier.fillMaxSize()

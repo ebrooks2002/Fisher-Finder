@@ -1,9 +1,12 @@
+/**
+ * @Author Ethan Brooks
+ * Instantiates the view model and local context.
+ * Calls the HomeScreen composable function.
+ */
+
 package com.github.ebrooks2002.buoyfinder.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,6 +28,7 @@ fun BuoyFinderApp() {
     ) {
         val buoyFinderViewModel: BuoyFinderViewModel = viewModel()
         val context = LocalContext.current
+
         HomeScreen(
             buoyFinderUiState = buoyFinderViewModel.buoyFinderUiState,
             onGetDataClicked = {buoyFinderViewModel.getAssetData()},
@@ -38,8 +42,8 @@ fun BuoyFinderApp() {
 }
 
 @Preview(
-    showBackground = true,       // 1. Adds a white background
-    showSystemUi = true,         // 2. Adds status bar and nav bar
+    showBackground = true,
+    showSystemUi = true,
     device = "id:pixel_5"
 )
 @Composable
@@ -48,14 +52,13 @@ fun BuoyFinderAppPreview() {
         HomeScreen(
             buoyFinderUiState = com.github.ebrooks2002.buoyfinder.ui.screens.BuoyFinderUiState.Success(
                 AssetData()
-            ), // Or .Success("...")
-            onGetDataClicked = {}, // Empty lambda function (does nothing)
-            userLocation = null,   // Or a specific Location object if needed
+            ),
+            onGetDataClicked = {},
+            userLocation = null,
             onStartLocationUpdates = {},
             userRotation = 0f,
             userDirection = "N",
             onStartRotationUpdates = {},
-            // Empty lambda function
         )
     }
 }

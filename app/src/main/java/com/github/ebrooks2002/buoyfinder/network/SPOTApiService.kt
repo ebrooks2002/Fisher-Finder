@@ -7,7 +7,6 @@ import retrofit2.http.GET
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 
-
 private const val FEED_ID = "0r0YXhJmCiRJpmmJiaAdr6Ez6VIhahnMu"
 
 private const val BASE_URL =
