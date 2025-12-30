@@ -44,7 +44,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import android.location.Location
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults.cardColors
+import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.material3.Surface
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme
@@ -165,7 +169,7 @@ fun ResultScreen(assetData: AssetData,
         Row(
             modifier = Modifier
                 .fillMaxWidth() // Place row at the top
-                .padding(top = 25.dp, start = 16.dp, end = 16.dp), // Global padding
+                .padding(vertical = 5.dp, horizontal = 10.dp), // Global padding
             horizontalArrangement = Arrangement.SpaceBetween, // Pushes items to edges
             verticalAlignment = Alignment.CenterVertically
         )
@@ -206,59 +210,68 @@ fun DisplayAssetData(assetName: String,
                      outputDateFormat: String,
                      outputTimeFormat: String,
                      gpsInfo: String? = null) {
-        Column(
+        Card(
             modifier = Modifier
-                .padding(top = 20.dp)
+                .padding(top = 10.dp, start = 16.dp, end = 16.dp)
                 .wrapContentHeight()
-                .fillMaxWidth(0.95F),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth(),
+            elevation = cardElevation(defaultElevation = 0.dp),
+            colors = cardColors(containerColor = Color.White)
         ) {
-            Text(
+            Column(
                 modifier = Modifier
-                    .padding(10.dp)
-                    .fillMaxWidth(),
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-                text = "SPOT Tracker: $assetName " // Updated label
-            )
-            Text(
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .fillMaxWidth(),
-                fontSize = 20.sp, text = position
-            )
-            Text(
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .fillMaxWidth(),
-                fontSize = 20.sp, text = outputDateFormat
-            )
-            Text(
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .fillMaxWidth(),
-                fontSize = 20.sp, text = outputTimeFormat
-            )
-            Spacer(
-                modifier = Modifier.height(5.dp)
-            )
-            Text(
-                modifier = Modifier
-                    .padding(10.dp)
-                    .fillMaxWidth(),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                text = "My Device:"
-            )
-            if (gpsInfo != null) {
+                    .padding(vertical = 20.dp)
+                    .wrapContentHeight()
+                    .fillMaxWidth(0.95F),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
                     modifier = Modifier
-                        .padding(start=10.dp)
+                        .padding(10.dp)
                         .fillMaxWidth(),
-                    fontSize = 18.sp,
-                    text = gpsInfo
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    text = "Tracker: $assetName " // Updated label
                 )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 10.dp)
+                        .fillMaxWidth(),
+                    fontSize = 20.sp, text = position
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 10.dp)
+                        .fillMaxWidth(),
+                    fontSize = 20.sp, text = outputDateFormat
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 10.dp)
+                        .fillMaxWidth(),
+                    fontSize = 20.sp, text = outputTimeFormat
+                )
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .fillMaxWidth(),
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    text = "My Device:"
+                )
+                if (gpsInfo != null) {
+                    Text(
+                        modifier = Modifier
+                            .padding(start=10.dp, bottom = 10.dp)
+                            .fillMaxWidth(),
+                        fontSize = 18.sp,
+                        text = gpsInfo
+                    )
+                }
             }
         }
     }
@@ -270,7 +283,7 @@ fun RefreshFeedButton(
        Button(
            onClick = onGetDataClicked,
            modifier = Modifier.padding(top=40.dp, end=8.dp),
-           colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF453563))
+           colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583))
        ) {
            Text(text = "Refresh",
                maxLines = 1)
@@ -285,7 +298,7 @@ fun DropDownMenu(
 
     Box(modifier = Modifier.padding(top = 40.dp, start = 5.dp)) { // Adjust this padding to move it up/down
         Button(onClick = { expanded = true },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF453563))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583))
         ) {
             Text(text = currentSelection ?: "Select Asset")
             Icon(
