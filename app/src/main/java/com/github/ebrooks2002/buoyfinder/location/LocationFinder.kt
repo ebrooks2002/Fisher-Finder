@@ -12,13 +12,26 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+/**
+ * Communicates with system hardware to get GPS data.
+ *
+ * Creates a fused location provider, requests location updates, exposes location data as a flow.
+ *
+ * @constructor The application context to retrieve the LocationServices object.
+ * @author E. Brooks
+ */
 class LocationFinder(private val context: Context) {
     private val client = LocationServices.getFusedLocationProviderClient(context)
 
-    @SuppressLint("MissingPermission") // We will check permissions in the UI layer
+    /**
+     * Returns a flow of location objects representing geographic location of device. When client stops listening,
+     * all location updates are removed.
+     *
+     * @param interval The minimum time interval between location updates in milliseconds.
+     */
+    @SuppressLint("MissingPermission")
     fun getLocationUpdates(interval: Long): Flow<Location> {
         return callbackFlow {
-            // Define criteria: High Accuracy, update every 2 seconds
             val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
                 .build()
 
@@ -29,9 +42,7 @@ class LocationFinder(private val context: Context) {
                     }
                 }
             }
-
             client.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
-            // Clean up when we stop listening
             awaitClose {
                 client.removeLocationUpdates(locationCallback)
             }

@@ -1,3 +1,11 @@
+/**
+ *
+ * Define data classes to parse XML Response and assign to data objects.
+ * Uses SimpleXML library's annotated classes.
+ *
+ * @author Ethan Brooks
+ */
+
 package com.github.ebrooks2002.buoyfinder.model
 
 import org.simpleframework.xml.Element
@@ -48,14 +56,12 @@ data class Message(
     @field:Element(name = "altitude", required = false)
     var altitude: Int = 0,
 
-    // Keep this optional as it appears in some messages but not your current STOP message
     @field:Element(name = "messageContent", required = false)
     var messageContent: String = ""
 ) {
     private fun parseDate(): java.util.Date? {
         return if (dateTime.isNotBlank()) {
             try {
-                // Input format from SPOT API (e.g., 2025-12-12T21:36:42+0000)
                 SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US).parse(dateTime)
             } catch (e: Exception) {
                 null

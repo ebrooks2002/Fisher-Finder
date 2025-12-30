@@ -1,3 +1,4 @@
+
 package com.github.ebrooks2002.buoyfinder.ui.screens
 
 import android.util.Log
@@ -20,6 +21,15 @@ sealed interface BuoyFinderUiState {
     object Loading : BuoyFinderUiState
 }
 
+/**
+ * The view model for the Buoy Finder app.
+ *
+ * Tracks the state of the UI, launches coroutine to
+ * asynchronously retrieve and hold user location and rotation data, and asset data.
+ *
+ * @author E. Brooks
+ */
+
 class BuoyFinderViewModel : ViewModel(){
     var buoyFinderUiState: BuoyFinderUiState by mutableStateOf(BuoyFinderUiState.Loading)
         private set
@@ -41,6 +51,11 @@ class BuoyFinderViewModel : ViewModel(){
 
     private val locUpdateInterval = 3000L // User location update interval length in milliseconds.
 
+    /**
+     * Collects the flow from getRotationUpdates and assigns it to the userRotation public variable.
+     *
+     * @param context The application context to retrieve the SensorManager object.
+     */
     fun startRotationTracking(context: android.content.Context) {
         val rotationClient = RotationSensor(context)
         viewModelScope.launch {
@@ -49,6 +64,12 @@ class BuoyFinderViewModel : ViewModel(){
             }
         }
     }
+
+    /**
+     * Collects the flow from getLocationUpdates and assigns it to the userLocation public variable.
+     *
+     * @param context The application context to retrieve the LocationServices object.
+     */
 
     fun startLocationTracking(context: android.content.Context) {
         val locationClient = LocationFinder(context)
@@ -64,6 +85,9 @@ class BuoyFinderViewModel : ViewModel(){
         getAssetData()
     }
 
+    /**
+     * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
+     */
     fun getAssetData() {
         viewModelScope.launch {
             buoyFinderUiState = BuoyFinderUiState.Loading

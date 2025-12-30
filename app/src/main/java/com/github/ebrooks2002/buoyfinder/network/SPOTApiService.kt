@@ -1,3 +1,8 @@
+/**
+ * @author Ethan Brooks
+ * Builds a Retrofit client, calls SPOT Server, gets XML Feed, parses data using simpleXML.
+ */
+
 package com.github.ebrooks2002.buoyfinder.network
 
 import com.github.ebrooks2002.buoyfinder.model.AssetData
@@ -26,7 +31,13 @@ private val retrofit = Retrofit.Builder()
     .client(client)
     .build()
 
+/**
+ * Defines how Retrofit talks to the SPOT web server.
+ */
 interface SPOTApiService {
+    /**
+     * Returns an asset data object containing XML feed data.
+     */
     @GET("message.xml")
     suspend fun getData(): AssetData
 }

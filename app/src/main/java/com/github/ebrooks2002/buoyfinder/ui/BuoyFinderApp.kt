@@ -1,7 +1,9 @@
 /**
- * @Author Ethan Brooks
+ *
  * Instantiates the view model and local context.
  * Calls the HomeScreen composable function.
+ *
+ * @Author E. Brooks
  */
 
 package com.github.ebrooks2002.buoyfinder.ui
