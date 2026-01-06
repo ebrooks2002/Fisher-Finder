@@ -54,6 +54,7 @@ import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.material3.Surface
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.github.ebrooks2002.buoyfinder.ui.map.OfflineMap
 import com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme
 
 
@@ -204,6 +205,14 @@ fun ResultScreen(assetData: AssetData,
         }
 
         DisplayAssetData(assetName, position, outputDateFormat = formattedDate, outputTimeFormat = formattedTime, gpsInfo)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp) // You MUST set a height
+                .padding(top = 16.dp)
+        ) {
+            OfflineMap()
+        }
     }
 }
 @Composable
