@@ -169,7 +169,8 @@ fun ResultScreen(
             position = navState.position,
             outputDateFormat = navState.formattedDate,
             outputTimeFormat = navState.formattedTime,
-            gpsInfo = navState.gpsInfo
+            gpsInfo = navState.gpsInfo,
+            diffMinutes = navState.diffMinutes
         )
 
         Box(
@@ -209,7 +210,8 @@ fun DisplayAssetData(
     position: String,
     outputDateFormat: String,
     outputTimeFormat: String,
-    gpsInfo: String? = null
+    gpsInfo: String? = null,
+    diffMinutes: String? = null
 ) {
     Card(
         modifier = Modifier
@@ -241,6 +243,7 @@ fun DisplayAssetData(
                     .fillMaxWidth(),
                 fontSize = 20.sp, text = position
             )
+
             Text(
                 modifier = Modifier
                     .padding(start = 10.dp)
@@ -251,8 +254,9 @@ fun DisplayAssetData(
                 modifier = Modifier
                     .padding(start = 10.dp)
                     .fillMaxWidth(),
-                fontSize = 20.sp, text = outputTimeFormat
+                fontSize = 20.sp, text = outputTimeFormat + "(" + diffMinutes + " min ago)"
             )
+
             Spacer(
                 modifier = Modifier.height(5.dp)
             )

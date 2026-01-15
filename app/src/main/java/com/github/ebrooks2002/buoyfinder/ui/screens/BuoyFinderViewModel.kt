@@ -186,6 +186,7 @@ class BuoyFinderViewModel : ViewModel(){
             uniqueAssets = uniqueAssets,
             formattedDate = selectedMessage?.formattedDate ?: "Date not available",
             formattedTime = selectedMessage?.formattedTime ?: "Time not available",
+            diffMinutes = diffMinutes.toString(),
             color = color
         )
     }
@@ -202,6 +203,7 @@ class BuoyFinderViewModel : ViewModel(){
         val uniqueAssets: List<String>,
         val formattedDate: String,
         val formattedTime: String,
+        val diffMinutes: String,
         val color: String
     )
 

@@ -57,6 +57,8 @@ fun OfflineMap(
             feature.addStringProperty("time", message.formattedTime ?: "Unknown Time")
             feature.addStringProperty("date", message.formattedDate ?: "Unknown Date")
             feature.addStringProperty("color", assetState.color)
+            feature.addStringProperty("diffMinutes", assetState.diffMinutes)
+            Log.d("diff in mins", assetState.diffMinutes)
             feature.addStringProperty("position", (message.latitude.toString() + ", " + message.longitude.toString()) ?: "Unknown Position"
             )
 
@@ -154,8 +156,8 @@ fun OfflineMap(
                                 val feature = features[0]
                                 val name = feature.getStringProperty("name")
                                 val time = feature.getStringProperty("time")
+                                val diffMinutes = feature.getStringProperty("diffMinutes")
                                 val date = feature.getStringProperty("date")
-
                                 val info = "$name\n$time\n$date"
                                 showBuoyPopup(context, mapView, point.x, point.y, info)
                                 true
