@@ -173,6 +173,7 @@ fun ResultScreen(
             outputTimeFormat = navState.formattedTime,
             gpsInfo = navState.gpsInfo,
             diffMinutes = navState.diffMinutes,
+            userRotation = navState.userRotation,
             movingHeading = navState.movingHeading,
         )
 
@@ -212,6 +213,7 @@ fun DisplayRefreshMessage(color: Color, message: String) {
 fun DisplayAssetData(
     assetName: String,
     movingHeading: Float,
+    userRotation: Float?,
     position: String,
     outputDateFormat: String,
     outputTimeFormat: String,
@@ -265,7 +267,6 @@ fun DisplayAssetData(
                     DeviceInfo(gpsInfo)
                 }
             }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -279,7 +280,10 @@ fun DisplayAssetData(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Arrow(rotation = movingHeading)
+                    Arrow(
+                        rotation = movingHeading,
+                        headerDisplay = "Moving Heading Arrow"
+                    )
                 }
                 Column(
                     modifier = Modifier
@@ -289,7 +293,10 @@ fun DisplayAssetData(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                   // DeviceInfo(gpsInfo)
+                    Arrow(
+                        rotation = userRotation,
+                        headerDisplay = "Rotation Arrow"
+                    )
                 }
             }
         }
@@ -323,12 +330,31 @@ fun TrackerInfo(assetName: String,
             .fillMaxWidth(),
         fontSize = 15.sp, text = outputDateFormat
     )
-    Text(
+    Row(
         modifier = Modifier
-            .padding(start=2.dp)
-            .fillMaxWidth(),
-        fontSize = 15.sp, text = outputTimeFormat + "(" + diffMinutes + " min ago)"
-    )
+            .border(0.dp, Color.Black)
+    ) {
+        Text(
+            modifier = Modifier
+                .padding(start = 2.dp),
+            fontSize = 15.sp, text = outputTimeFormat
+        )
+        if (diffMinutes != null) {
+            val minutes = diffMinutes.toIntOrNull() ?: 0
+
+            // Define the color based on the range
+            val statusColor = when {
+                minutes <= 15 -> Color(0xFF008000)
+                minutes <= 45 -> Color(0xFFFFBF00)
+                else -> Color.Red
+            }
+            Text(
+                text= "(" + diffMinutes.toString() + " min. ago" + ")",
+                fontSize = 12.sp,
+                color = statusColor
+            )
+        }
+    }
     Text(
         modifier = Modifier
             .padding(start=2.dp)

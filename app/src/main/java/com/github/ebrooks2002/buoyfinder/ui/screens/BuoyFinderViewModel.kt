@@ -178,9 +178,9 @@ class BuoyFinderViewModel : ViewModel(){
 
             gpsInfo = """
             To Asset: %.2f km
-            Bearing to Asset: %.0f°
-            Moving: %.0f°
-            Pointed: %.0f° %s
+            Bearing: %.0f°
+            Heading: %.0f°
+            Facing: %.0f° %s
         """.trimIndent().format(distanceKm, bearingToBuoy, myHeading, userRotation ?: 0f, headingDirection)
         }
 
@@ -195,6 +195,7 @@ class BuoyFinderViewModel : ViewModel(){
             formattedDate = selectedMessage?.formattedDate ?: "Date not available",
             formattedTime = selectedMessage?.formattedTime ?: "Time not available",
             diffMinutes = diffMinutes.toString(),
+            userRotation = userRotation,
             color = color
         )
     }
@@ -213,6 +214,7 @@ class BuoyFinderViewModel : ViewModel(){
         val formattedTime: String,
         val diffMinutes: String,
         val movingHeading: Float,
+        val userRotation: Float?,
         val color: String
     )
 
