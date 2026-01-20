@@ -139,6 +139,8 @@ class BuoyFinderViewModel : ViewModel(){
 
         var myHeading = 0f
 
+        var bearingToBuoy = 0f
+
         val diffMinutes = if (time != null) {
             (now - time.time) / (1000 * 60)
         } else {
@@ -169,7 +171,7 @@ class BuoyFinderViewModel : ViewModel(){
             }
 
             val distanceKm = userLocation!!.distanceTo(buoyLoc) / 1000
-            val bearingToBuoy = userLocation!!.bearingTo(buoyLoc)
+            bearingToBuoy = userLocation!!.bearingTo(buoyLoc)
 
             // only update myHeading if user is moving above 0.5 meters per second.
             if (userLocation!!.hasSpeed() && userLocation!!.speed > 0.5f) {
@@ -196,6 +198,7 @@ class BuoyFinderViewModel : ViewModel(){
             formattedTime = selectedMessage?.formattedTime ?: "Time not available",
             diffMinutes = diffMinutes.toString(),
             userRotation = userRotation,
+            bearingToBuoy = bearingToBuoy,
             color = color
         )
     }
@@ -215,6 +218,7 @@ class BuoyFinderViewModel : ViewModel(){
         val diffMinutes: String,
         val movingHeading: Float,
         val userRotation: Float?,
+        val bearingToBuoy: Float,
         val color: String
     )
 

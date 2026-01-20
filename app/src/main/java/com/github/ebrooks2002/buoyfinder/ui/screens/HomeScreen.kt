@@ -175,6 +175,8 @@ fun ResultScreen(
             diffMinutes = navState.diffMinutes,
             userRotation = navState.userRotation,
             movingHeading = navState.movingHeading,
+            bearingToBuoy = navState.bearingToBuoy,
+            color = navState.color
         )
 
         Box(
@@ -213,11 +215,13 @@ fun DisplayRefreshMessage(color: Color, message: String) {
 fun DisplayAssetData(
     assetName: String,
     movingHeading: Float,
+    bearingToBuoy: Float,
     userRotation: Float?,
     position: String,
     outputDateFormat: String,
     outputTimeFormat: String,
     gpsInfo: String? = null,
+    color: String,
     diffMinutes: String? = null
 ) {
     Card(
@@ -252,8 +256,8 @@ fun DisplayAssetData(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    TrackerInfo(assetName, position, outputDateFormat, outputTimeFormat, diffMinutes
-                    )
+                    TrackerInfo(assetName, position, outputDateFormat, outputTimeFormat, color=color, diffMinutes=diffMinutes)
+
                 }
                 Column(
                     modifier = Modifier
@@ -282,7 +286,8 @@ fun DisplayAssetData(
                 ) {
                     Arrow(
                         rotation = movingHeading,
-                        headerDisplay = "Moving Heading Arrow"
+                        headerDisplay = "Heading:",
+                        targetBearing = bearingToBuoy
                     )
                 }
                 Column(
@@ -308,6 +313,7 @@ fun TrackerInfo(assetName: String,
                 position: String,
                 outputDateFormat: String,
                 outputTimeFormat: String,
+                color: String,
                 diffMinutes: String? = null) {
     Text(
         modifier = Modifier
@@ -340,18 +346,10 @@ fun TrackerInfo(assetName: String,
             fontSize = 15.sp, text = outputTimeFormat
         )
         if (diffMinutes != null) {
-            val minutes = diffMinutes.toIntOrNull() ?: 0
-
-            // Define the color based on the range
-            val statusColor = when {
-                minutes <= 15 -> Color(0xFF008000)
-                minutes <= 45 -> Color(0xFFFFBF00)
-                else -> Color.Red
-            }
             Text(
                 text= "(" + diffMinutes.toString() + " min. ago" + ")",
                 fontSize = 12.sp,
-                color = statusColor
+                color = Color(android.graphics.Color.parseColor(color)) // move import to top.
             )
         }
     }
