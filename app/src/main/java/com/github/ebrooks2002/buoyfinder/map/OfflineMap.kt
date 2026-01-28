@@ -168,7 +168,7 @@ fun OfflineMap(
                                         Expression.linear(),
                                         Expression.toNumber(Expression.get("diffMinutes")),
                                         Expression.stop(0, 1.0f),   // New: Solid
-                                        Expression.stop(120, 0.2f) // Old: Ghostly
+                                        Expression.stop(120, 0.1f) // Old: Ghostly
                                     )
                                 ),
 
@@ -247,7 +247,6 @@ fun OfflineMap(
                                     Expression.literal(1f)
                                 )
                             ),
-
                             // DYNAMIC STROKE COLOR
                             PropertyFactory.circleStrokeColor(
                                 Expression.switchCase(
@@ -258,7 +257,24 @@ fun OfflineMap(
                                     Expression.literal("#000000"),
                                     Expression.literal("#FFFFFF")
                                 )
-                            )
+                            ),
+                            PropertyFactory.circleOpacity(
+                                Expression.interpolate(
+                                    Expression.linear(),
+                                    Expression.toNumber(Expression.get("diffMinutes")),
+                                    Expression.stop(0, 1.0f),   // New: Solid
+                                    Expression.stop(120, 0.1f) // Old: Ghostly
+                                )
+                            ),
+                            PropertyFactory.circleColor(
+                                Expression.interpolate(
+                                    Expression.linear(),
+                                    Expression.toNumber(Expression.get("diffMinutes")),
+                                    Expression.stop(0, Expression.rgb(0, 168, 107)),    // 0 mins: Vibrant Green
+                                    Expression.stop(45, Expression.rgb(255, 211, 44)),  // 12 hrs: Yellow
+                                    Expression.stop(120, Expression.rgb(255, 0, 0))     // 24 hrs: Red
+                                )
+                            ),
                         )
                     }
                 }
@@ -305,7 +321,7 @@ private fun enableLocationComponent(context: Context, map: org.maplibre.android.
         // Set the render mode (COMPASS shows the blue dot with a direction bearing)
         locationComponent.renderMode = RenderMode.COMPASS
 
-        locationComponent.cameraMode = CameraMode.NONE
+        locationComponent.cameraMode = CameraMode.TRACKING
     }
 }
 
