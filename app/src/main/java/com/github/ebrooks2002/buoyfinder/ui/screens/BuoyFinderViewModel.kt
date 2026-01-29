@@ -1,6 +1,7 @@
 
 package com.github.ebrooks2002.buoyfinder.ui.screens
 
+import android.hardware.GeomagneticField
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,6 +13,11 @@ import com.github.ebrooks2002.buoyfinder.network.SPOTApi
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import android.location.Location
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import com.github.ebrooks2002.buoyfinder.location.LocationFinder
 import com.github.ebrooks2002.buoyfinder.location.RotationSensor
 import com.github.ebrooks2002.buoyfinder.model.Message
@@ -60,7 +66,21 @@ class BuoyFinderViewModel : ViewModel(){
         val rotationClient = RotationSensor(context)
         viewModelScope.launch {
             rotationClient.getRotationUpdates().collect { rotation ->
-                userRotation = rotation
+                val loc = userLocation
+                if (loc != null) {
+                    val field = GeomagneticField(
+                        loc.latitude.toFloat(),
+                        loc.longitude.toFloat(),
+                        loc.altitude.toFloat(),
+                        System.currentTimeMillis()
+                    )
+                    val adjustedRotation = (rotation + field.declination +360f) % 360f
+                    userRotation = adjustedRotation
+                }
+                else {
+                    userRotation = rotation
+                }
+
             }
         }
     }
@@ -85,10 +105,22 @@ class BuoyFinderViewModel : ViewModel(){
         getAssetData()
     }
 
+
+    private var lastRequestTime: Long = 0
+    private val FIVE_MINUTES_MS = 5 * 60 * 1000
     /**
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
     fun getAssetData() {
+        val currentTime = System.currentTimeMillis()
+
+        // Check if 5 minutes have passed
+        if (currentTime - lastRequestTime < FIVE_MINUTES_MS) {
+            val secondsRemaining = (FIVE_MINUTES_MS - (currentTime - lastRequestTime)) / 1000
+            // Optional: Update a UI state to show a "Too early" message
+            Log.d("API_LIMIT", "Please wait $secondsRemaining more seconds.")
+            return
+        }
         viewModelScope.launch {
             buoyFinderUiState = BuoyFinderUiState.Loading
             buoyFinderUiState = try {
@@ -193,7 +225,7 @@ class BuoyFinderViewModel : ViewModel(){
 
         val now = System.currentTimeMillis()
 
-        var myHeading = 0f
+        var myHeading: Float? by mutableStateOf(null)
 
         var bearingToBuoy = 0f
 
@@ -218,7 +250,8 @@ class BuoyFinderViewModel : ViewModel(){
             "Lat: ${it.latitude},\nLong:${it.longitude}"
         } ?: "Position not available"
 
-        var gpsInfo = "Waiting for GPS Location..."
+        var gpsInfo: AnnotatedString = buildAnnotatedString { append("Waiting for GPS...") }
+
         if (userLocation != null && selectedMessage != null) {
             val buoyLoc = Location("Buoy").apply {
                 latitude = selectedMessage.latitude
@@ -233,19 +266,21 @@ class BuoyFinderViewModel : ViewModel(){
                 myHeading = userLocation!!.bearing
             }
 
-            gpsInfo = """
-            To Asset: %.2f km
-            Lat: % .4f 
-            Lon: % .4f
-            Bearing: %.0f°
-            Heading: %.0f°
-            Facing: %.0f° %s
-        """.trimIndent().format(distanceKm,
-                userLocation!!.latitude,
-                userLocation!!.longitude,
-                bearingToBuoy, myHeading,
-                userRotation ?: 0f,
-                headingDirection)
+            gpsInfo = buildAnnotatedString {
+                append("To Asset: %.2f km\n".format(distanceKm))
+                append("Lat: %.4f\n".format(userLocation!!.latitude))
+                append("Lon: %.4f\n".format(userLocation!!.longitude))
+                append("Bearing: %.0f°\n".format(bearingToBuoy))
+
+                withStyle(style = SpanStyle(color = Color.Red)) {
+                    append("Heading: ")
+                    append(myHeading?.let { "%.0f°".format(it) } ?: "N/A")
+                    append("\n")
+                }
+                withStyle(style = SpanStyle(color = Color.Blue)) {
+                    append("Facing: %.0f° %s".format(userRotation ?: 0f, headingDirection))
+                }
+            }
         }
 
         return NavigationState(
@@ -276,12 +311,12 @@ class BuoyFinderViewModel : ViewModel(){
         val selectedAssetName: String?,
         val displayName: String,
         val position: String,
-        val gpsInfo: String,
+        val gpsInfo: AnnotatedString,
         val uniqueAssets: List<String>,
         val formattedDate: String,
         val formattedTime: String,
         val diffMinutes: String,
-        val movingHeading: Float,
+        val movingHeading: Float?,
         val userRotation: Float?,
         val bearingToBuoy: Float,
         val assetSpeedDisplay: String,

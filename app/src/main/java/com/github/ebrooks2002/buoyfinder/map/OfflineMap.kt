@@ -50,10 +50,12 @@ fun OfflineMap(
 
     // create a nav state object containing attributes like position, asset name, ect.
     val assetState = viewmodel.getNavigationState(assetData)
-
     val selectedName = assetState.displayName
 
+
+
     val featureCollection = remember(assetState.allMessages, assetState.diffMinutes) {
+
         val features = assetState.allMessages.map { message ->
             val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
             feature.addStringProperty("name", message.messengerName?.substringAfterLast("_") ?: "Unknown")
@@ -62,6 +64,7 @@ fun OfflineMap(
             else {
                 Long.MAX_VALUE // If no date, treat as "very old"
             }
+
             feature.addStringProperty("time", message.formattedTime ?: "Unknown Time")
             feature.addStringProperty("date", message.formattedDate ?: "Unknown Date")
             feature.addStringProperty("diffMinutes", diffMinutes.toString())

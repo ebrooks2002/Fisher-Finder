@@ -1,5 +1,7 @@
 package com.github.ebrooks2002.buoyfinder.ui.screens
 
+import android.hardware.GeomagneticField
+import android.location.Location
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
@@ -18,11 +20,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.geometry.minDimension
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun Arrow(
     rotation: Float?,
+    heading: Float?,
     headerDisplay: String,
     targetBearing: Float? = null,
     modifier: Modifier = Modifier
@@ -67,12 +68,30 @@ fun Arrow(
                     contentDescription = "Arrow",
                     modifier = Modifier
                         .size(80.dp)
+                        .alpha(0.5f)
                         .graphicsLayer {
                             rotationZ = rotation
-                        }
+                        },
+                    tint = Color.Blue
                 )
 
-                Log.d("Bearing to Buoy",  targetBearing.toString())
+                Icon(
+                    imageVector = Icons.Outlined.Straight,
+                    contentDescription = "Arrow",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .alpha(0.5f)
+                        .graphicsLayer {
+                            rotationZ = heading?: 0f
+                        },
+                    tint = if (heading == null) {
+                        Color.Gray
+                    } else {
+                        Color.Red
+                    }
+
+                )
+
                 if (targetBearing != null) {
                     // We subtract the device rotation because the compass "rotates"
                     // relative to your physical orientation

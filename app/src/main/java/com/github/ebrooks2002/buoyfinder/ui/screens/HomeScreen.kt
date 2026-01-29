@@ -57,6 +57,7 @@ import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.ebrooks2002.buoyfinder.ui.map.OfflineMap
 import com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme
@@ -179,7 +180,6 @@ fun ResultScreen(
             assetSpeed = navState.assetSpeedDisplay,
             color = navState.color
         )
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -193,6 +193,7 @@ fun ResultScreen(
                     .padding(horizontal = 12.dp)
                     .border(1.dp, Color.Black),
                 assetData = assetData,
+
                 viewmodel = viewModel
             )
         }
@@ -215,13 +216,13 @@ fun DisplayRefreshMessage(color: Color, message: String) {
 @Composable
 fun DisplayAssetData(
     assetName: String,
-    movingHeading: Float,
+    movingHeading: Float?,
     bearingToBuoy: Float,
     userRotation: Float?,
     position: String,
     outputDateFormat: String,
     outputTimeFormat: String,
-    gpsInfo: String? = null,
+    gpsInfo: AnnotatedString? = null,
     color: String,
     assetSpeed: String? = null,
     diffMinutes: String? = null
@@ -291,7 +292,8 @@ fun DisplayAssetData(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Arrow(
-                        rotation = movingHeading,
+                        rotation = userRotation,
+                        heading = movingHeading,
                         headerDisplay = "Heading:",
                         targetBearing = bearingToBuoy
                     )
@@ -304,11 +306,13 @@ fun DisplayAssetData(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Arrow(
-                        rotation = userRotation,
-                        headerDisplay = "Facing:",
-                        targetBearing = bearingToBuoy
-                    )
+                    Text(text="")
+//                    Arrow(
+//                        rotation = userRotation,
+//                        heading = movingHeading,
+//                        headerDisplay = "Facing:",
+//                        targetBearing = bearingToBuoy
+//                    )
                 }
             }
         }
@@ -372,7 +376,7 @@ fun TrackerInfo(assetName: String,
 }
 
 @Composable
-fun DeviceInfo(gpsInfo: String? = null) {
+fun DeviceInfo(gpsInfo: AnnotatedString? = null) {
     Text(
         modifier = Modifier
             .padding(all=2.dp)
