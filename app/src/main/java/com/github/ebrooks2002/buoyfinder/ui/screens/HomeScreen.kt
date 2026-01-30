@@ -178,7 +178,8 @@ fun ResultScreen(
             movingHeading = navState.movingHeading,
             bearingToBuoy = navState.bearingToBuoy,
             assetSpeed = navState.assetSpeedDisplay,
-            color = navState.color
+            color = navState.color,
+            temaToAsset = navState.temaToAsset
         )
         Box(
             modifier = Modifier
@@ -189,8 +190,8 @@ fun ResultScreen(
         {
             OfflineMap(
                 modifier = Modifier
-                    .height(295.dp)
-                    .padding(horizontal = 12.dp)
+                    .height(350.dp)
+                    .padding(horizontal = 5.dp)
                     .border(1.dp, Color.Black),
                 assetData = assetData,
 
@@ -225,7 +226,8 @@ fun DisplayAssetData(
     gpsInfo: AnnotatedString? = null,
     color: String,
     assetSpeed: String? = null,
-    diffMinutes: String? = null
+    diffMinutes: String? = null,
+    temaToAsset: Float
 ) {
     Card(
         modifier = Modifier
@@ -255,7 +257,7 @@ fun DisplayAssetData(
                         .weight(1f)
                         .wrapContentHeight()
                         .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+
                     verticalArrangement = Arrangement.spacedBy(-6.dp),
                 ) {
                     TrackerInfo(assetName,
@@ -263,8 +265,9 @@ fun DisplayAssetData(
                         outputDateFormat,
                         outputTimeFormat,
                         color=color,
-                        diffMinutes=diffMinutes,
-                        assetSpeed = assetSpeed)
+                        diffMinutes = diffMinutes,
+                        assetSpeed = assetSpeed,
+                        temaToAsset = temaToAsset)
 
                 }
                 Column(
@@ -298,22 +301,6 @@ fun DisplayAssetData(
                         targetBearing = bearingToBuoy
                     )
                 }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .wrapContentHeight()
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(text="")
-//                    Arrow(
-//                        rotation = userRotation,
-//                        heading = movingHeading,
-//                        headerDisplay = "Facing:",
-//                        targetBearing = bearingToBuoy
-//                    )
-                }
             }
         }
     }
@@ -326,7 +313,9 @@ fun TrackerInfo(assetName: String,
                 outputTimeFormat: String,
                 color: String,
                 assetSpeed: String? = null,
-                diffMinutes: String? = null) {
+                diffMinutes: String? = null,
+                temaToAsset: Float
+) {
     Text(
         modifier = Modifier
             .padding(start=2.dp)
@@ -337,11 +326,18 @@ fun TrackerInfo(assetName: String,
     )
     Text(
         modifier = Modifier
+            .padding(start=2.dp, top=8.dp, bottom=1.dp)
+            .fillMaxWidth(),
+        fontSize = 15.sp,
+        lineHeight=15.sp,
+        text = position
+    )
+    Text(
+        modifier = Modifier
             .padding(start=2.dp)
             .fillMaxWidth(),
         fontSize = 15.sp,
-        lineHeight = 18.sp,
-        text = position
+        text = "Tema Harbor: %.1f km".format(temaToAsset)
     )
     Text(
         modifier = Modifier

@@ -105,15 +105,16 @@ class BuoyFinderViewModel : ViewModel(){
         getAssetData()
     }
 
-
     private var lastRequestTime: Long = 0
     private val FIVE_MINUTES_MS = 5 * 60 * 1000
+
+
     /**
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
     fun getAssetData() {
         val currentTime = System.currentTimeMillis()
-
+        Log.d("curr time, last request time", "$currentTime + $lastRequestTime, ")
         // Check if 5 minutes have passed
         if (currentTime - lastRequestTime < FIVE_MINUTES_MS) {
             val secondsRemaining = (FIVE_MINUTES_MS - (currentTime - lastRequestTime)) / 1000
@@ -121,6 +122,7 @@ class BuoyFinderViewModel : ViewModel(){
             Log.d("API_LIMIT", "Please wait $secondsRemaining more seconds.")
             return
         }
+        lastRequestTime = currentTime
         viewModelScope.launch {
             buoyFinderUiState = BuoyFinderUiState.Loading
             buoyFinderUiState = try {
@@ -166,6 +168,7 @@ class BuoyFinderViewModel : ViewModel(){
      * Processes raw AssetData and Sensor data into a clean state for the UI.
      */
     fun getNavigationState(assetData: AssetData): NavigationState {
+
         val messageList = assetData.feedMessageResponse?.messages?.list ?: emptyList()
         var assetSpeedDisplay = "0.00 km/h"
 
@@ -247,8 +250,15 @@ class BuoyFinderViewModel : ViewModel(){
 
         // UI String: Position
         val position = selectedMessage?.let {
-            "Lat: ${it.latitude},\nLong:${it.longitude}"
+            "Lat: ${it.latitude},\nLong: ${it.longitude}"
         } ?: "Position not available"
+
+        val temaPortCoords = Location("Tema Harbour").apply{
+            latitude = 5.63438
+            longitude = 0.01674
+        }
+
+        var temaToAsset: Float = 0f
 
         var gpsInfo: AnnotatedString = buildAnnotatedString { append("Waiting for GPS...") }
 
@@ -259,8 +269,8 @@ class BuoyFinderViewModel : ViewModel(){
             }
 
             val distanceKm = userLocation!!.distanceTo(buoyLoc) / 1000
+            temaToAsset = temaPortCoords.distanceTo(buoyLoc) / 1000
             bearingToBuoy = userLocation!!.bearingTo(buoyLoc)
-
             // only update myHeading if user is moving above 0.5 meters per second.
             if (userLocation!!.hasSpeed() && userLocation!!.speed > 0.5f) {
                 myHeading = userLocation!!.bearing
@@ -298,7 +308,9 @@ class BuoyFinderViewModel : ViewModel(){
             userRotation = userRotation,
             bearingToBuoy = bearingToBuoy,
             assetSpeedDisplay = assetSpeedDisplay,
-            color = color
+            color = color,
+            temaToAsset = temaToAsset
+
         )
     }
 
@@ -320,6 +332,7 @@ class BuoyFinderViewModel : ViewModel(){
         val userRotation: Float?,
         val bearingToBuoy: Float,
         val assetSpeedDisplay: String,
-        val color: String
+        val color: String,
+        val temaToAsset: Float
     )
 }

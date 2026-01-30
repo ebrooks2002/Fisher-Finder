@@ -12,7 +12,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#ffffff"
+        "background-color": "#c5d6e7"
       }
     },
     {
@@ -27,8 +27,8 @@
         "line-cap": "round"
       },
       "paint": {
-        "line-color": "#948325",
-        "line-width": 1.25,
+        "line-color": "#777777",
+        "line-width": 1.0,
         "line-opacity": 1.0
       }
     }
