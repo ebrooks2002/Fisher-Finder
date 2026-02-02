@@ -1,0 +1,36 @@
+{
+  "version": 8,
+  "name": "World Coastline Style",
+  "sources": {
+    "local_mbtiles_source": {
+      "type": "vector",
+      "url": "{path_to_mbtiles}"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#c5d6e7"
+      }
+    },
+    {
+      "id": "coastline-layer",
+      "type": "line",
+      "source": "local_mbtiles_source",
+      "source-layer": "coastline",
+      "minzoom": 0,
+      "maxzoom": 10,
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#777777",
+        "line-width": 1.0,
+        "line-opacity": 1.0
+      }
+    }
+  ]
+}

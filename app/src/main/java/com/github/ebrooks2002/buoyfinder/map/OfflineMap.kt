@@ -1,5 +1,6 @@
 package com.github.ebrooks2002.buoyfinder.ui.map
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.RectF
 import android.util.Log
@@ -7,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,6 +34,10 @@ import org.maplibre.geojson.Point
 import java.io.File
 import java.io.FileOutputStream
 import com.github.ebrooks2002.buoyfinder.ui.screens.BuoyFinderViewModel
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
+import org.maplibre.android.location.permissions.PermissionsManager
 import org.maplibre.android.style.expressions.Expression
 
 
@@ -38,25 +45,31 @@ import org.maplibre.android.style.expressions.Expression
 fun OfflineMap(
     modifier: Modifier = Modifier,
     assetData: AssetData,
-    viewmodel: BuoyFinderViewModel = BuoyFinderViewModel()
+    viewmodel: BuoyFinderViewModel
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // create a nav state object containing attributes like position, asset name, ect.
     val assetState = viewmodel.getNavigationState(assetData)
+    val selectedName = assetState.displayName
 
-    val featureCollection = remember(assetState.messages) {
-        val features = assetState.messages.map { message ->
+    var isLocationEnabled by remember { mutableStateOf(false) }
+
+    val featureCollection = remember(assetState.allMessages, assetState.diffMinutes) {
+
+        val features = assetState.allMessages.map { message ->
             val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
+            feature.addStringProperty("name", message.messengerName?.substringAfterLast("_") ?: "Unknown")
+            val time = message?.parseDate()
+            val diffMinutes = if (time != null) {(System.currentTimeMillis() - time.time) / (1000 * 60)}
+            else {
+                Long.MAX_VALUE // If no date, treat as "very old"
+            }
 
-            feature.addStringProperty(
-                "name",
-                message.messengerName?.substringAfterLast("_") ?: "Unknown"
-            )
             feature.addStringProperty("time", message.formattedTime ?: "Unknown Time")
             feature.addStringProperty("date", message.formattedDate ?: "Unknown Date")
-            feature.addStringProperty("color", assetState.color)
+            feature.addStringProperty("diffMinutes", diffMinutes.toString())
             feature.addStringProperty("position", (message.latitude.toString() + ", " + message.longitude.toString()) ?: "Unknown Position"
             )
 
@@ -76,11 +89,21 @@ fun OfflineMap(
     // 2. Prepare files in the background (Prevents UI Freeze)
     LaunchedEffect(context) {
         withContext(Dispatchers.IO) {
-            val mbtilesFile = copyAssetToFiles(context, "ghana_offline_3857.mbtiles")
-            val jsonFile = copyAssetToFiles(context, "styles.json")
+            // 1. Copy MBTiles
+            val mbtilesFile = copyAssetToFiles(context, "global_coastline.mbtiles")
+
+            // 2. FORCE copy the Style JSON (overwrite old cached version)
+            val jsonFile = File(context.filesDir, "coastlines_styles1.json")
+            context.assets.open("coastlines_styles1.json").use { input ->
+                jsonFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
             var jsonContent = jsonFile.readText()
-            jsonContent = jsonContent.replace("{path_to_mbtiles}", mbtilesFile.absolutePath)
+            val absoluteMbtilesPath = "mbtiles://${mbtilesFile.absolutePath}"
+            jsonContent = jsonContent.replace("{path_to_mbtiles}", absoluteMbtilesPath)
             jsonFile.writeText(jsonContent)
+            Log.d("MapDebug", "FINAL JSON CONTENT: $jsonContent")
             styleUrl = "file://${jsonFile.absolutePath}"
         }
     }
@@ -88,7 +111,6 @@ fun OfflineMap(
     // 3. Render Map only when style is ready
     if (styleUrl != null) {
         val currentStyleUrl = styleUrl!!
-
         val mapView = remember {
             MapView(context).apply {
                 // IMPORTANT: onCreate is required for MapLibre/Mapbox to function
@@ -96,7 +118,6 @@ fun OfflineMap(
             }
         }
 
-        // 4. Manage Lifecycle
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
                 when (event) {
@@ -114,6 +135,19 @@ fun OfflineMap(
             }
         }
 
+        LaunchedEffect(styleUrl) {
+            while (!isLocationEnabled) {
+                mapView.getMapAsync { map ->
+                    val style = map.style
+                    if (style != null && style.isFullyLoaded) {
+                        isLocationEnabled = enableLocationComponent(context, map, style)
+                    }
+                }
+                if (isLocationEnabled) break
+                kotlinx.coroutines.delay(2000) // Check every 2 seconds until successful
+            }
+        }
+
         AndroidView(
             factory = {
                 mapView.apply {
@@ -123,13 +157,46 @@ fun OfflineMap(
                             val sourceId = "buoys-source"
                             val source = GeoJsonSource(sourceId, featureCollection)
                             style.addSource(source)
-
+                            Log.d("buoy", sourceId.toString())
+                            isLocationEnabled = enableLocationComponent(context, map, style)
                             val circleLayer = CircleLayer("buoys-layer", sourceId)
                             circleLayer.setProperties(
                                 PropertyFactory.circleRadius(6f),
-                                PropertyFactory.circleColor(Expression.get("color")),
-                                PropertyFactory.circleStrokeWidth(1f),
-                                PropertyFactory.circleStrokeColor(android.graphics.Color.WHITE)
+
+                                PropertyFactory.circleStrokeWidth(
+                                    Expression.switchCase(
+                                        Expression.eq(Expression.get("name"), Expression.literal(selectedName)),
+                                        Expression.literal(3f),
+                                        Expression.literal(1f)
+                                    )
+                                ),
+
+                                PropertyFactory.circleColor(
+                                    Expression.interpolate(
+                                        Expression.linear(),
+                                        Expression.toNumber(Expression.get("diffMinutes")),
+                                        Expression.stop(0, Expression.rgb(0, 168, 107)),    // 0 mins: Vibrant Green
+                                        Expression.stop(45, Expression.rgb(255, 211, 44)),  // 12 hrs: Yellow
+                                        Expression.stop(120, Expression.rgb(255, 0, 0))     // 24 hrs: Red
+                                    )
+                                ),
+
+                                PropertyFactory.circleOpacity(
+                                    Expression.interpolate(
+                                        Expression.linear(),
+                                        Expression.toNumber(Expression.get("diffMinutes")),
+                                        Expression.stop(0, 1.0f),   // New: Solid
+                                        Expression.stop(120, 0.1f) // Old: Ghostly
+                                    )
+                                ),
+
+                                PropertyFactory.circleStrokeColor(
+                                    Expression.switchCase(
+                                        Expression.eq(Expression.get("name"), Expression.literal(selectedName)),
+                                        Expression.literal("#000000"),
+                                        Expression.literal("#FFFFFF")
+                                    )
+                                )
                             )
                             style.addLayer(circleLayer)
                         }
@@ -139,6 +206,8 @@ fun OfflineMap(
                         uiSettings.isScrollGesturesEnabled = true
                         uiSettings.isRotateGesturesEnabled = false
                         uiSettings.isTiltGesturesEnabled = false
+                        uiSettings.isLogoEnabled = false
+                        uiSettings.isAttributionEnabled = false
 
                         map.addOnMapClickListener { latLng ->
                             // 1. Convert click location to screen pixels
@@ -154,9 +223,9 @@ fun OfflineMap(
                                 val feature = features[0]
                                 val name = feature.getStringProperty("name")
                                 val time = feature.getStringProperty("time")
+                                val diffMinutes = feature.getStringProperty("diffMinutes")
                                 val date = feature.getStringProperty("date")
-
-                                val info = "$name\n$time\n$date"
+                                val info = "$name\n$time ($diffMinutes min. ago) \n$date"
                                 showBuoyPopup(context, mapView, point.x, point.y, info)
                                 true
                             } else {
@@ -180,8 +249,52 @@ fun OfflineMap(
             update = { _ ->
                 // Refresh pins when new data comes in
                 mapView.getMapAsync { map ->
-                    val source = map.style?.getSourceAs<GeoJsonSource>("buoys-source")
-                    source?.setGeoJson(featureCollection)
+                    val style = map.style
+                    if (style != null && style.isFullyLoaded) {
+                        val source = map.style?.getSourceAs<GeoJsonSource>("buoys-source")
+                        source?.setGeoJson(featureCollection)
+                        val layer = style.getLayerAs<CircleLayer>("buoys-layer")
+                        layer?.setProperties(
+                            PropertyFactory.circleStrokeWidth(
+                                Expression.switchCase(
+                                    Expression.eq(
+                                        Expression.get("name"),
+                                        Expression.literal(selectedName)
+                                    ),
+                                    Expression.literal(3f),
+                                    Expression.literal(1f)
+                                )
+                            ),
+                            // DYNAMIC STROKE COLOR
+                            PropertyFactory.circleStrokeColor(
+                                Expression.switchCase(
+                                    Expression.eq(
+                                        Expression.get("name"),
+                                        Expression.literal(selectedName)
+                                    ),
+                                    Expression.literal("#000000"),
+                                    Expression.literal("#FFFFFF")
+                                )
+                            ),
+                            PropertyFactory.circleOpacity(
+                                Expression.interpolate(
+                                    Expression.linear(),
+                                    Expression.toNumber(Expression.get("diffMinutes")),
+                                    Expression.stop(0, 1.0f),   // New: Solid
+                                    Expression.stop(120, 0.1f) // Old: Ghostly
+                                )
+                            ),
+                            PropertyFactory.circleColor(
+                                Expression.interpolate(
+                                    Expression.linear(),
+                                    Expression.toNumber(Expression.get("diffMinutes")),
+                                    Expression.stop(0, Expression.rgb(0, 168, 107)),    // 0 mins: Vibrant Green
+                                    Expression.stop(45, Expression.rgb(255, 211, 44)),  // 12 hrs: Yellow
+                                    Expression.stop(120, Expression.rgb(255, 0, 0))     // 24 hrs: Red
+                                )
+                            ),
+                        )
+                    }
                 }
             }
         )
@@ -207,6 +320,30 @@ private fun copyAssetToFiles(context: Context, fileName: String): File {
         }
     }
     return file
+}
+
+@SuppressLint("MissingPermission")
+private fun enableLocationComponent(context: Context, map: org.maplibre.android.maps.MapLibreMap, style: Style) : Boolean {
+    // Check if permissions are granted (You should handle the request logic elsewhere in your UI)
+    Log.d("LocationDebug", "Attempting to enable location comp")
+    if (PermissionsManager.areLocationPermissionsGranted(context)) {
+        val locationComponent = map.locationComponent
+        // Activate with options
+        val activationOptions = LocationComponentActivationOptions.builder(context, style)
+            .useDefaultLocationEngine(true)
+            .build()
+
+        locationComponent.activateLocationComponent(activationOptions)
+        // Enable to make it visible
+        locationComponent.isLocationComponentEnabled = true
+
+        // Set the render mode (COMPASS shows the blue dot with a direction bearing)
+        locationComponent.renderMode = RenderMode.COMPASS
+
+        locationComponent.cameraMode = CameraMode.TRACKING
+        return true
+    }
+    return false
 }
 
 private fun showBuoyPopup(

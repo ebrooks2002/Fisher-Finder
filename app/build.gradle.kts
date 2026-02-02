@@ -61,6 +61,7 @@ dependencies {
     implementation("org.maplibre.gl:android-sdk:11.8.0") // Check for latest version
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.graphics.shapes)
+    implementation(libs.androidx.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

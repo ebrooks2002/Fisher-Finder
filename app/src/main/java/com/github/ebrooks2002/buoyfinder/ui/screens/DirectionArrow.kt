@@ -1,0 +1,140 @@
+package com.github.ebrooks2002.buoyfinder.ui.screens
+
+import android.hardware.GeomagneticField
+import android.location.Location
+import android.util.Log
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.North
+import androidx.compose.material.icons.outlined.North
+import androidx.compose.material.icons.outlined.Straight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+
+@Composable
+fun Arrow(
+    rotation: Float?,
+    heading: Float?,
+    headerDisplay: String,
+    targetBearing: Float? = null,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+    ) {
+        Text(
+            text = headerDisplay,
+            fontWeight = Bold,
+            fontSize = 18.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        if (rotation != null) {
+            Box(
+                modifier = Modifier.size(100.dp), // Area for the compass
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "N",
+                    modifier = Modifier
+                        .align(Alignment.TopCenter),
+                    fontWeight = Bold,
+                    fontSize = 18.sp,
+                    color = Color.Red // Red is standard for North
+                )
+
+                Icon(
+                    imageVector = Icons.Outlined.Straight,
+                    contentDescription = "Arrow",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .alpha(0.5f)
+                        .graphicsLayer {
+                            rotationZ = rotation
+                        },
+                    tint = Color.Blue
+                )
+
+                Icon(
+                    imageVector = Icons.Outlined.Straight,
+                    contentDescription = "Arrow",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .alpha(0.5f)
+                        .graphicsLayer {
+                            rotationZ = heading?: 0f
+                        },
+                    tint = if (heading == null) {
+                        Color.Gray
+                    } else {
+                        Color.Red
+                    }
+
+                )
+
+                if (targetBearing != null) {
+                    // We subtract the device rotation because the compass "rotates"
+                    // relative to your physical orientation
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ){
+
+                        val visualRadius = (size.minDimension / 2.0f) - 4.dp.toPx()
+
+                        // 2. Draw the Path (The Ring)
+                        drawCircle(
+                            color = Color.Gray.copy(alpha = 0.3f), // Light gray path
+                            radius = visualRadius,
+                            center = center,
+                            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                width = 1.dp.toPx() // Makes it a ring instead of a solid disk
+                            )
+                        )
+
+                        val radius = size.minDimension / 2.0f // Slightly inside the border
+                        val angleInRad = Math.toRadians(targetBearing.toDouble())
+
+                        val x = (center.x + radius * kotlin.math.sin(angleInRad)).toFloat()
+                        val y = (center.y - radius * kotlin.math.cos(angleInRad)).toFloat()
+
+                        drawCircle(
+                            color = Color.Blue, // Target color
+                            radius = 4.dp.toPx(),
+                            center = androidx.compose.ui.geometry.Offset(x, y)
+                        )
+                    }
+                }
+            }
+        } else {
+            Text(
+                text = "Unable to load, likely due to missing magnetometer",
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+
+    }
+}
+
+
+
