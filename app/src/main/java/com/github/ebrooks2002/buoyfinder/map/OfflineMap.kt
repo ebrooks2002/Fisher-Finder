@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -52,7 +54,7 @@ fun OfflineMap(
     val assetState = viewmodel.getNavigationState(assetData)
     val selectedName = assetState.displayName
 
-
+    var isLocationEnabled by remember { mutableStateOf(false) }
 
     val featureCollection = remember(assetState.allMessages, assetState.diffMinutes) {
 
@@ -133,6 +135,19 @@ fun OfflineMap(
             }
         }
 
+        LaunchedEffect(styleUrl) {
+            while (!isLocationEnabled) {
+                mapView.getMapAsync { map ->
+                    val style = map.style
+                    if (style != null && style.isFullyLoaded) {
+                        isLocationEnabled = enableLocationComponent(context, map, style)
+                    }
+                }
+                if (isLocationEnabled) break
+                kotlinx.coroutines.delay(2000) // Check every 2 seconds until successful
+            }
+        }
+
         AndroidView(
             factory = {
                 mapView.apply {
@@ -143,7 +158,7 @@ fun OfflineMap(
                             val source = GeoJsonSource(sourceId, featureCollection)
                             style.addSource(source)
                             Log.d("buoy", sourceId.toString())
-                            enableLocationComponent(context, map, style)
+                            isLocationEnabled = enableLocationComponent(context, map, style)
                             val circleLayer = CircleLayer("buoys-layer", sourceId)
                             circleLayer.setProperties(
                                 PropertyFactory.circleRadius(6f),
@@ -308,8 +323,9 @@ private fun copyAssetToFiles(context: Context, fileName: String): File {
 }
 
 @SuppressLint("MissingPermission")
-private fun enableLocationComponent(context: Context, map: org.maplibre.android.maps.MapLibreMap, style: Style) {
+private fun enableLocationComponent(context: Context, map: org.maplibre.android.maps.MapLibreMap, style: Style) : Boolean {
     // Check if permissions are granted (You should handle the request logic elsewhere in your UI)
+    Log.d("LocationDebug", "Attempting to enable location comp")
     if (PermissionsManager.areLocationPermissionsGranted(context)) {
         val locationComponent = map.locationComponent
         // Activate with options
@@ -325,7 +341,9 @@ private fun enableLocationComponent(context: Context, map: org.maplibre.android.
         locationComponent.renderMode = RenderMode.COMPASS
 
         locationComponent.cameraMode = CameraMode.TRACKING
+        return true
     }
+    return false
 }
 
 private fun showBuoyPopup(

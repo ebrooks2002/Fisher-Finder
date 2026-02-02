@@ -108,7 +108,6 @@ class BuoyFinderViewModel : ViewModel(){
     private var lastRequestTime: Long = 0
     private val FIVE_MINUTES_MS = 5 * 60 * 1000
 
-
     /**
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
