@@ -26,43 +26,25 @@ class RotationSensor (private val context: Context) {
      */
     fun getRotationUpdates(): Flow<Float> = callbackFlow {
         // create sensor objects
-        val accelerometer = client.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        val magnetometer = client.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-        // check whether device actually has these sensors.
-        if (accelerometer == null || magnetometer == null) {
+        val rotationVector = client.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+
+        if (rotationVector == null) {
             close()
             return@callbackFlow
         }
-        val accelerometerReading = FloatArray(3)
-        val magnetometerReading = FloatArray(3)
+
         val rotationMatrix = FloatArray(9)
         val orientationAngles = FloatArray(3)
         val sensorListener = object: SensorEventListener {
-            val alpha = 0.99f
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-                // don't need to implement
-            }
 
-            /**
-             * Sends a new heading in azimuth degrees when the sensorManager detects an event (magnet moves).
-             *
-             * @return The new heading in azimuth degrees.
-             */
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
             override fun onSensorChanged(event: SensorEvent) {
-                if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-                    for (i in 0..2) {
-                        accelerometerReading[i] = alpha * accelerometerReading[i] + (1 - alpha) * event.values[i]
-                    }
-                } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-                    for (i in 0..2) {
-                        magnetometerReading[i] = alpha * magnetometerReading[i] + (1 - alpha) * event.values[i]
-                    }
-                }
-                val success = SensorManager.getRotationMatrix(
-                    rotationMatrix, null, accelerometerReading,
-                    magnetometerReading)
+                if (event.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
+                    // Android calculates the tilt-compensated matrix for you here
+                    SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
 
-                if (success) {
                     SensorManager.getOrientation(rotationMatrix, orientationAngles)
                     val azimuthInRadians = orientationAngles[0]
                     val azimuthInDegrees = Math.toDegrees(azimuthInRadians.toDouble()).toFloat()
@@ -71,8 +53,7 @@ class RotationSensor (private val context: Context) {
                 }
             }
         }
-        client.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
-        client.registerListener(sensorListener, magnetometer, SensorManager.SENSOR_DELAY_NORMAL)
+        client.registerListener(sensorListener, rotationVector, SensorManager.SENSOR_DELAY_UI)
 
         awaitClose {
             client.unregisterListener(sensorListener)

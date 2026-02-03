@@ -142,7 +142,7 @@ fun ResultScreen(
     error: Boolean
 ) {
     // Everything is processed here in one line
-    val navState = viewModel.getNavigationState(assetData)
+    val navState = viewModel.processAssetData(assetData)
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -337,7 +337,7 @@ fun TrackerInfo(assetName: String,
             .padding(start=2.dp)
             .fillMaxWidth(),
         fontSize = 15.sp,
-        text = "Tema Harbor: %.1f km".format(temaToAsset)
+        text = "To Tema: %.1f km".format(temaToAsset)
     )
     Text(
         modifier = Modifier

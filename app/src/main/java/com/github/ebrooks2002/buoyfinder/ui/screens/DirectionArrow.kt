@@ -89,20 +89,15 @@ fun Arrow(
                     } else {
                         Color.Red
                     }
-
                 )
 
                 if (targetBearing != null) {
-                    // We subtract the device rotation because the compass "rotates"
-                    // relative to your physical orientation
                     Canvas(
                         modifier = Modifier
                             .fillMaxSize()
                     ){
-
                         val visualRadius = (size.minDimension / 2.0f) - 4.dp.toPx()
-
-                        // 2. Draw the Path (The Ring)
+                        // 2. Draw the Path
                         drawCircle(
                             color = Color.Gray.copy(alpha = 0.3f), // Light gray path
                             radius = visualRadius,

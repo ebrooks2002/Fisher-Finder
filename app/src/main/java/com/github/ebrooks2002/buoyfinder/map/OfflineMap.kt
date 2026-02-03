@@ -51,7 +51,7 @@ fun OfflineMap(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // create a nav state object containing attributes like position, asset name, ect.
-    val assetState = viewmodel.getNavigationState(assetData)
+    val assetState = viewmodel.processAssetData(assetData)
     val selectedName = assetState.displayName
 
     var isLocationEnabled by remember { mutableStateOf(false) }
@@ -189,7 +189,6 @@ fun OfflineMap(
                                         Expression.stop(120, 0.1f) // Old: Ghostly
                                     )
                                 ),
-
                                 PropertyFactory.circleStrokeColor(
                                     Expression.switchCase(
                                         Expression.eq(Expression.get("name"), Expression.literal(selectedName)),
@@ -202,9 +201,12 @@ fun OfflineMap(
                         }
 
                         val uiSettings = map.uiSettings
+                        uiSettings.isCompassEnabled = true
+                        uiSettings.setCompassGravity(android.view.Gravity.TOP or android.view.Gravity.END)
+                        uiSettings.setCompassMargins(0, 50, 50, 0)
                         uiSettings.isZoomGesturesEnabled = true
                         uiSettings.isScrollGesturesEnabled = true
-                        uiSettings.isRotateGesturesEnabled = false
+                        uiSettings.isRotateGesturesEnabled = true
                         uiSettings.isTiltGesturesEnabled = false
                         uiSettings.isLogoEnabled = false
                         uiSettings.isAttributionEnabled = false

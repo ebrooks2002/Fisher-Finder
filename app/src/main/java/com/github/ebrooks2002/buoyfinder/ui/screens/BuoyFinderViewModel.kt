@@ -44,8 +44,10 @@ class BuoyFinderViewModel : ViewModel(){
         private set
     var userRotation: Float? by mutableStateOf(null)
         private set
-
-    // given userRotation, calculates direction (n, w, s, e). returns string.
+    var selectedAssetName by mutableStateOf<String?>(null)
+        private set
+    private var lastRequestTime: Long = 0
+    private val locUpdateInterval = 3000L // user location updates every 3 seconds.
     val headingDirection: String
         get() {
             val rot = userRotation ?: return "No Magnetometer"
@@ -55,10 +57,13 @@ class BuoyFinderViewModel : ViewModel(){
             return directions[safeIndex]
         }
 
-    private val locUpdateInterval = 3000L // User location update interval length in milliseconds.
+    // Constructor to call getAssetData
+    init {
+        getAssetData()
+    }
 
     /**
-     * Collects the flow from getRotationUpdates and assigns it to the userRotation public variable.
+     * Collects the flow from getRotationUpdates and updates userRotation.
      *
      * @param context The application context to retrieve the SensorManager object.
      */
@@ -80,17 +85,15 @@ class BuoyFinderViewModel : ViewModel(){
                 else {
                     userRotation = rotation
                 }
-
             }
         }
     }
 
     /**
-     * Collects the flow from getLocationUpdates and assigns it to the userLocation public variable.
+     * Collects the flow from getLocationUpdates and updates userLocation.
      *
      * @param context The application context to retrieve the LocationServices object.
      */
-
     fun startLocationTracking(context: android.content.Context) {
         val locationClient = LocationFinder(context)
         viewModelScope.launch {
@@ -101,26 +104,13 @@ class BuoyFinderViewModel : ViewModel(){
         }
     }
 
-    init {
-        getAssetData()
-    }
-
-    private var lastRequestTime: Long = 0
-    private val FIVE_MINUTES_MS = 5 * 60 * 1000
-
     /**
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
     fun getAssetData() {
+        val FIVE_MINUTES_MS = 5 * 60 * 1000
         val currentTime = System.currentTimeMillis()
-        Log.d("curr time, last request time", "$currentTime + $lastRequestTime, ")
-        // Check if 5 minutes have passed
-        if (currentTime - lastRequestTime < FIVE_MINUTES_MS) {
-            val secondsRemaining = (FIVE_MINUTES_MS - (currentTime - lastRequestTime)) / 1000
-            // Optional: Update a UI state to show a "Too early" message
-            Log.d("API_LIMIT", "Please wait $secondsRemaining more seconds.")
-            return
-        }
+        if (currentTime - lastRequestTime < FIVE_MINUTES_MS) { return }
         lastRequestTime = currentTime
         viewModelScope.launch {
             buoyFinderUiState = BuoyFinderUiState.Loading
@@ -155,132 +145,73 @@ class BuoyFinderViewModel : ViewModel(){
         }
     }
 
-    // 1. State to track which asset the user has selected
-    var selectedAssetName by mutableStateOf<String?>(null)
-        private set
-
     fun selectAsset(name: String) {
         selectedAssetName = name
     }
 
     /**
-     * Processes raw AssetData and Sensor data into a clean state for the UI.
+     * Processes raw AssetData and returns a NavigationState data object
      */
-    fun getNavigationState(assetData: AssetData): NavigationState {
-
+    fun processAssetData(assetData: AssetData): NavigationState {
         val messageList = assetData.feedMessageResponse?.messages?.list ?: emptyList()
         var assetSpeedDisplay = "0.00 km/h"
-
-        // 1. Get all messages for the SELECTED asset, sorted by time (newest first)
         val assetHistory = messageList
             .filter { it.messengerName == selectedAssetName }
             .sortedByDescending { it.parseDate()?.time ?: 0L }
-
-        Log.d("asset his", assetHistory.toString())
-
-        // 2. We need at least 2 points to calculate speed
         if (assetHistory.size >= 2) {
             val latest = assetHistory[0]
             val previous = assetHistory[1]
-
-            val time1 = latest.parseDate()?.time ?: 0L
-            val time2 = previous.parseDate()?.time ?: 0L
-
-            val timeDiffMs = time1 - time2
-
-            if (timeDiffMs > 0) {
-                val loc1 = Location("PointA").apply {
-                    latitude = latest.latitude
-                    longitude = latest.longitude
-                }
-                val loc2 = Location("PointB").apply {
-                    latitude = previous.latitude
-                    longitude = previous.longitude
-                }
-
-                val distanceMeters = loc1.distanceTo(loc2)
-
-                // Speed = Distance (km) / Time (hours)
-                val distanceKm = distanceMeters / 1000.0
-                val timeHours = timeDiffMs / (1000.0 * 60.0 * 60.0)
-
-                val speedKmh = distanceKm / timeHours
-
-                assetSpeedDisplay = "%.2f km/h".format(speedKmh)
-                Log.d("speed", assetSpeedDisplay)
+            val currentSpeed = getCurrentSpeed(latest, previous)
+            if (currentSpeed > 0.0) {
+                assetSpeedDisplay = "%.2f km/h".format(currentSpeed)
             }
         } else {
             assetSpeedDisplay = "Calculating..." // Or "N/A" if only 1 message exists
         }
-        // FILTER: Only keep the most recent message for each unique asset
         val latestMessagesPerAsset = messageList.distinctBy { it.messengerName }
-        // Use latestMessagesPerAsset for the rest of the logic
         val uniqueAssets = messageList.mapNotNull { it.messengerName }.distinct().sorted()
-
         if (selectedAssetName == null && uniqueAssets.isNotEmpty()) {
             selectedAssetName = uniqueAssets.first()
         }
-
         val selectedMessage = messageList.find { it.messengerName == selectedAssetName }
-
         val time = selectedMessage?.parseDate()
-
         val now = System.currentTimeMillis()
-
         var myHeading: Float? by mutableStateOf(null)
-
         var bearingToBuoy = 0f
-
         val diffMinutes = if (time != null) {
             (now - time.time) / (1000 * 60)
         } else {
             Long.MAX_VALUE // If no date, treat as "very old"
         }
-
-        Log.d("diffMinutes", diffMinutes.toString())
         val color = when {
             diffMinutes <= 15 -> "#00A86B" // Green
             diffMinutes <= 30 -> "#ccae16" // Yellow
             else -> "#FF0000"              // Red
         }
-
-        // UI String: Asset Name
         val displayName = selectedMessage?.messengerName?.substringAfterLast("_") ?: "Select an Asset"
-
-        // UI String: Position
-        val position = selectedMessage?.let {
-            "Lat: ${it.latitude},\nLong: ${it.longitude}"
-        } ?: "Position not available"
-
-        val temaPortCoords = Location("Tema Harbour").apply{
-            latitude = 5.63438
-            longitude = 0.01674
-        }
-
+        val position = selectedMessage?.let {"Lat: ${it.latitude},\nLong: ${it.longitude}"} ?: "Position unavailable"
         var temaToAsset: Float = 0f
-
         var gpsInfo: AnnotatedString = buildAnnotatedString { append("Waiting for GPS...") }
-
         if (userLocation != null && selectedMessage != null) {
-            val buoyLoc = Location("Buoy").apply {
+            val assetPosition = Location("Buoy").apply {
                 latitude = selectedMessage.latitude
                 longitude = selectedMessage.longitude
             }
-
-            val distanceKm = userLocation!!.distanceTo(buoyLoc) / 1000
-            temaToAsset = temaPortCoords.distanceTo(buoyLoc) / 1000
-            bearingToBuoy = userLocation!!.bearingTo(buoyLoc)
-            // only update myHeading if user is moving above 0.5 meters per second.
+            val temaPortCoords = Location("Tema Harbour").apply {
+                latitude = 5.63438
+                longitude = 0.01674
+            }
+            val userToAsset = userLocation!!.distanceTo(assetPosition) / 1000
+            temaToAsset = temaPortCoords.distanceTo(assetPosition) / 1000
+            bearingToBuoy = userLocation!!.bearingTo(assetPosition)
             if (userLocation!!.hasSpeed() && userLocation!!.speed > 0.5f) {
                 myHeading = userLocation!!.bearing
             }
-
             gpsInfo = buildAnnotatedString {
-                append("To Asset: %.2f km\n".format(distanceKm))
+                append("To Asset: %.2f km\n".format(userToAsset))
                 append("Lat: %.4f\n".format(userLocation!!.latitude))
                 append("Lon: %.4f\n".format(userLocation!!.longitude))
                 append("Bearing: %.0f°\n".format(bearingToBuoy))
-
                 withStyle(style = SpanStyle(color = Color.Red)) {
                     append("Heading: ")
                     append(myHeading?.let { "%.0f°".format(it) } ?: "N/A")
@@ -291,47 +222,23 @@ class BuoyFinderViewModel : ViewModel(){
                 }
             }
         }
-
-        return NavigationState(
-            allMessages = messageList,
-            messages = latestMessagesPerAsset,
-            selectedAssetName = selectedAssetName,
-            displayName = displayName,
-            position = position,
-            gpsInfo = gpsInfo,
-            uniqueAssets = uniqueAssets,
-            movingHeading = myHeading,
-            formattedDate = selectedMessage?.formattedDate ?: "Date not available",
-            formattedTime = selectedMessage?.formattedTime ?: "Time not available",
-            diffMinutes = diffMinutes.toString(),
-            userRotation = userRotation,
-            bearingToBuoy = bearingToBuoy,
-            assetSpeedDisplay = assetSpeedDisplay,
-            color = color,
-            temaToAsset = temaToAsset
-
-        )
+            return NavigationState(
+                allMessages = messageList,
+                messages = latestMessagesPerAsset,
+                selectedAssetName = selectedAssetName,
+                displayName = displayName,
+                position = position,
+                gpsInfo = gpsInfo,
+                uniqueAssets = uniqueAssets,
+                movingHeading = myHeading,
+                formattedDate = selectedMessage?.formattedDate ?: "Date not available",
+                formattedTime = selectedMessage?.formattedTime ?: "Time not available",
+                diffMinutes = diffMinutes.toString(),
+                userRotation = userRotation,
+                bearingToBuoy = bearingToBuoy,
+                assetSpeedDisplay = assetSpeedDisplay,
+                color = color,
+                temaToAsset = temaToAsset
+            )
+        }
     }
-
-    /**
-     * Data class to hold pre-processed UI info
-     */
-    data class NavigationState(
-        val allMessages: List<Message>,
-        val messages : List<Message>,
-        val selectedAssetName: String?,
-        val displayName: String,
-        val position: String,
-        val gpsInfo: AnnotatedString,
-        val uniqueAssets: List<String>,
-        val formattedDate: String,
-        val formattedTime: String,
-        val diffMinutes: String,
-        val movingHeading: Float?,
-        val userRotation: Float?,
-        val bearingToBuoy: Float,
-        val assetSpeedDisplay: String,
-        val color: String,
-        val temaToAsset: Float
-    )
-}
