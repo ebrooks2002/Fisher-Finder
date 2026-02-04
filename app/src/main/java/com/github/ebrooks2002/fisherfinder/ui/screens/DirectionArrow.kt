@@ -1,19 +1,13 @@
-package com.github.ebrooks2002.buoyfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.ui.screens
 
-import android.hardware.GeomagneticField
-import android.location.Location
-import android.util.Log
+import android.graphics.Color.parseColor
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.North
-import androidx.compose.material.icons.outlined.North
 import androidx.compose.material.icons.outlined.Straight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -32,6 +26,7 @@ import androidx.compose.ui.unit.sp
 fun Arrow(
     rotation: Float?,
     heading: Float?,
+    color: String,
     headerDisplay: String,
     targetBearing: Float? = null,
     modifier: Modifier = Modifier
@@ -106,15 +101,12 @@ fun Arrow(
                                 width = 1.dp.toPx() // Makes it a ring instead of a solid disk
                             )
                         )
-
                         val radius = size.minDimension / 2.0f // Slightly inside the border
                         val angleInRad = Math.toRadians(targetBearing.toDouble())
-
                         val x = (center.x + radius * kotlin.math.sin(angleInRad)).toFloat()
                         val y = (center.y - radius * kotlin.math.cos(angleInRad)).toFloat()
-
                         drawCircle(
-                            color = Color.Blue, // Target color
+                            color = Color(parseColor(color)),
                             radius = 4.dp.toPx(),
                             center = androidx.compose.ui.geometry.Offset(x, y)
                         )

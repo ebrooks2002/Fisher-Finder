@@ -1,6 +1,6 @@
-package com.github.ebrooks2002.buoyfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.ui.screens
 import androidx.compose.ui.text.AnnotatedString
-import com.github.ebrooks2002.buoyfinder.model.Message
+import com.github.ebrooks2002.fisherfinder.model.Message
 
 data class NavigationState(
     val allMessages: List<Message>,

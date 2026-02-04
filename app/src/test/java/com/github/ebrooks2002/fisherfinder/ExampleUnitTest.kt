@@ -1,4 +1,4 @@
-package com.github.ebrooks2002.buoyfinder
+package com.github.ebrooks2002.fisherfinder
 
 import org.junit.Test
 

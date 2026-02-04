@@ -1,4 +1,4 @@
-package com.github.ebrooks2002.buoyfinder.ui.theme
+package com.github.ebrooks2002.fisherfinder.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

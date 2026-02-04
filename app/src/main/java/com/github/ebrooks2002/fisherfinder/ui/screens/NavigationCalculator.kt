@@ -1,7 +1,7 @@
-package com.github.ebrooks2002.buoyfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.ui.screens
 
 import android.location.Location
-import com.github.ebrooks2002.buoyfinder.model.Message
+import com.github.ebrooks2002.fisherfinder.model.Message
 
 fun getCurrentSpeed(latest: Message, previous: Message): Double {
     val time1 = latest.parseDate()?.time ?: 0L
@@ -23,6 +23,14 @@ fun getCurrentSpeed(latest: Message, previous: Message): Double {
         return speedKmh
     }
     return 0.0
+}
+
+fun getFreshnessColor(diffMinutes: Long): String {
+    return when {
+        diffMinutes <= 15 -> "#00A86B"
+        diffMinutes <= 30 -> "#ccae16"
+        else -> "#FF0000"
+    }
 }
 
 

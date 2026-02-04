@@ -1,5 +1,5 @@
 
-package com.github.ebrooks2002.buoyfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.ui.screens
 
 import android.hardware.GeomagneticField
 import android.util.Log
@@ -8,8 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.ebrooks2002.buoyfinder.model.AssetData
-import com.github.ebrooks2002.buoyfinder.network.SPOTApi
+import com.github.ebrooks2002.fisherfinder.model.AssetData
+import com.github.ebrooks2002.fisherfinder.network.SPOTApi
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import android.location.Location
@@ -18,14 +18,14 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import com.github.ebrooks2002.buoyfinder.location.LocationFinder
-import com.github.ebrooks2002.buoyfinder.location.RotationSensor
-import com.github.ebrooks2002.buoyfinder.model.Message
+import com.github.ebrooks2002.fisherfinder.location.LocationFinder
+import com.github.ebrooks2002.fisherfinder.location.RotationSensor
+import com.github.ebrooks2002.fisherfinder.model.Message
 
-sealed interface BuoyFinderUiState {
-    data class Success(val assetData: AssetData) : BuoyFinderUiState
-    object Error : BuoyFinderUiState
-    object Loading : BuoyFinderUiState
+sealed interface FisherFinderUiState {
+    data class Success(val assetData: AssetData) : FisherFinderUiState
+    object Error : FisherFinderUiState
+    object Loading : FisherFinderUiState
 }
 
 /**
@@ -38,7 +38,7 @@ sealed interface BuoyFinderUiState {
  */
 
 class BuoyFinderViewModel : ViewModel(){
-    var buoyFinderUiState: BuoyFinderUiState by mutableStateOf(BuoyFinderUiState.Loading)
+    var buoyFinderUiState: FisherFinderUiState by mutableStateOf(FisherFinderUiState.Loading)
         private set
     var userLocation: Location? by mutableStateOf(null)
         private set
@@ -113,11 +113,11 @@ class BuoyFinderViewModel : ViewModel(){
         if (currentTime - lastRequestTime < FIVE_MINUTES_MS) { return }
         lastRequestTime = currentTime
         viewModelScope.launch {
-            buoyFinderUiState = BuoyFinderUiState.Loading
+            buoyFinderUiState = FisherFinderUiState.Loading
             buoyFinderUiState = try {
                 val allMessages = mutableListOf<Message>()
                 var listResult: AssetData? = null
-                for (i in 0..0) {
+                for (i in 0..5) {
                     val start = i * 50
                     val result = SPOTApi.retrofitService.getData(start = start)
                     if (listResult == null) {
@@ -130,17 +130,17 @@ class BuoyFinderViewModel : ViewModel(){
                 if (listResult != null) {
                     listResult.feedMessageResponse?.messages?.list = allMessages
                     Log.d("BuoyDebug", "Final combined count being sent to UI: ${allMessages.size}")
-                    BuoyFinderUiState.Success(listResult)
+                    FisherFinderUiState.Success(listResult)
                 }
                 else {
-                    BuoyFinderUiState.Error
+                    FisherFinderUiState.Error
                 }
             } catch (e: HttpException) {
                 Log.e("BuoyViewModel", "Network request failed: ${e.code()} ${e.message()}", e)
-                BuoyFinderUiState.Error
+                FisherFinderUiState.Error
             } catch (e: Exception) {
                 Log.e("BuoyViewModel", "Error fetching message ${e.message}", e)
-                BuoyFinderUiState.Error
+                FisherFinderUiState.Error
             }
         }
     }
@@ -166,7 +166,7 @@ class BuoyFinderViewModel : ViewModel(){
                 assetSpeedDisplay = "%.2f km/h".format(currentSpeed)
             }
         } else {
-            assetSpeedDisplay = "Calculating..." // Or "N/A" if only 1 message exists
+            assetSpeedDisplay = "Calculating..."
         }
         val latestMessagesPerAsset = messageList.distinctBy { it.messengerName }
         val uniqueAssets = messageList.mapNotNull { it.messengerName }.distinct().sorted()
@@ -183,24 +183,14 @@ class BuoyFinderViewModel : ViewModel(){
         } else {
             Long.MAX_VALUE // If no date, treat as "very old"
         }
-        val color = when {
-            diffMinutes <= 15 -> "#00A86B" // Green
-            diffMinutes <= 30 -> "#ccae16" // Yellow
-            else -> "#FF0000"              // Red
-        }
+        val color = getFreshnessColor(diffMinutes)
         val displayName = selectedMessage?.messengerName?.substringAfterLast("_") ?: "Select an Asset"
         val position = selectedMessage?.let {"Lat: ${it.latitude},\nLong: ${it.longitude}"} ?: "Position unavailable"
         var temaToAsset: Float = 0f
         var gpsInfo: AnnotatedString = buildAnnotatedString { append("Waiting for GPS...") }
         if (userLocation != null && selectedMessage != null) {
-            val assetPosition = Location("Buoy").apply {
-                latitude = selectedMessage.latitude
-                longitude = selectedMessage.longitude
-            }
-            val temaPortCoords = Location("Tema Harbour").apply {
-                latitude = 5.63438
-                longitude = 0.01674
-            }
+            val assetPosition = Location("Buoy").apply { latitude = selectedMessage.latitude; longitude = selectedMessage.longitude}
+            val temaPortCoords = Location("Tema Harbour").apply { latitude = 5.63438; longitude = 0.01674 }
             val userToAsset = userLocation!!.distanceTo(assetPosition) / 1000
             temaToAsset = temaPortCoords.distanceTo(assetPosition) / 1000
             bearingToBuoy = userLocation!!.bearingTo(assetPosition)

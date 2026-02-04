@@ -6,7 +6,7 @@
  * @Author E. Brooks
  */
 
-package com.github.ebrooks2002.buoyfinder.ui
+package com.github.ebrooks2002.fisherfinder.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -15,11 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.github.ebrooks2002.buoyfinder.ui.screens.BuoyFinderViewModel
-import com.github.ebrooks2002.buoyfinder.ui.screens.HomeScreen
+import com.github.ebrooks2002.fisherfinder.ui.screens.BuoyFinderViewModel
+import com.github.ebrooks2002.fisherfinder.ui.screens.HomeScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.github.ebrooks2002.buoyfinder.model.AssetData
-import com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme
+import com.github.ebrooks2002.fisherfinder.model.AssetData
+import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
 
 @Composable
 fun BuoyFinderApp() {
@@ -52,7 +52,7 @@ fun BuoyFinderApp() {
 fun BuoyFinderAppPreview() {
     BuoyFinderTheme {
         HomeScreen(
-            buoyFinderUiState = com.github.ebrooks2002.buoyfinder.ui.screens.BuoyFinderUiState.Success(
+            buoyFinderUiState = com.github.ebrooks2002.fisherfinder.ui.screens.FisherFinderUiState.Success(
                 AssetData()
             ),
             onGetDataClicked = {},

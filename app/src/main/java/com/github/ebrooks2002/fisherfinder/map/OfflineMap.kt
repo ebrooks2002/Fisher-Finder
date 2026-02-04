@@ -1,4 +1,4 @@
-package com.github.ebrooks2002.buoyfinder.ui.map
+package com.github.ebrooks2002.fisherfinder.ui.map
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.github.ebrooks2002.buoyfinder.model.AssetData
+import com.github.ebrooks2002.fisherfinder.model.AssetData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.maplibre.android.MapLibre
@@ -33,7 +33,7 @@ import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 import java.io.File
 import java.io.FileOutputStream
-import com.github.ebrooks2002.buoyfinder.ui.screens.BuoyFinderViewModel
+import com.github.ebrooks2002.fisherfinder.ui.screens.BuoyFinderViewModel
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
@@ -201,9 +201,6 @@ fun OfflineMap(
                         }
 
                         val uiSettings = map.uiSettings
-                        uiSettings.isCompassEnabled = true
-                        uiSettings.setCompassGravity(android.view.Gravity.TOP or android.view.Gravity.END)
-                        uiSettings.setCompassMargins(0, 50, 50, 0)
                         uiSettings.isZoomGesturesEnabled = true
                         uiSettings.isScrollGesturesEnabled = true
                         uiSettings.isRotateGesturesEnabled = true
@@ -214,13 +211,9 @@ fun OfflineMap(
                         map.addOnMapClickListener { latLng ->
                             // 1. Convert click location to screen pixels
                             val point = map.projection.toScreenLocation(latLng)
-
                             val hitBox =
                                 RectF(point.x - 15, point.y - 15, point.x + 15, point.y + 15)
-
-                            // 2. See if there is a buoy under that pixel
                             val features = map.queryRenderedFeatures(hitBox, "buoys-layer")
-
                             if (features.isNotEmpty()) {
                                 val feature = features[0]
                                 val name = feature.getStringProperty("name")

@@ -6,7 +6,7 @@
  * and error/loading messages.
  */
 
-package com.github.ebrooks2002.buoyfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,7 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.github.ebrooks2002.buoyfinder.model.AssetData
+import com.github.ebrooks2002.fisherfinder.model.AssetData
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,8 +59,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.github.ebrooks2002.buoyfinder.ui.map.OfflineMap
-import com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme
+import com.github.ebrooks2002.fisherfinder.ui.map.OfflineMap
+import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
 
 
 /**
@@ -78,7 +78,7 @@ import com.github.ebrooks2002.buoyfinder.ui.theme.BuoyFinderTheme
  */
 @Composable
 fun HomeScreen(
-    buoyFinderUiState: BuoyFinderUiState,
+    buoyFinderUiState: FisherFinderUiState,
     onGetDataClicked: () -> Unit,
     modifier: Modifier = Modifier, userLocation: Location?,
     onStartLocationUpdates: () -> Unit,
@@ -112,7 +112,7 @@ fun HomeScreen(
 
     var currentAssetData by remember { mutableStateOf<AssetData?>(null) }
 
-    if (buoyFinderUiState is BuoyFinderUiState.Success) {
+    if (buoyFinderUiState is FisherFinderUiState.Success) {
         currentAssetData = buoyFinderUiState.assetData
     }
 
@@ -121,13 +121,13 @@ fun HomeScreen(
             assetData = currentAssetData!!,
             viewModel = viewModel, // Pass the viewModel here
             onGetDataClicked = onGetDataClicked,
-            loading = buoyFinderUiState is BuoyFinderUiState.Loading,
-            error = buoyFinderUiState is BuoyFinderUiState.Error
+            loading = buoyFinderUiState is FisherFinderUiState.Loading,
+            error = buoyFinderUiState is FisherFinderUiState.Error
         )
     } else {
         when (buoyFinderUiState) {
-            is BuoyFinderUiState.Loading -> ErrorLoadingMessage(message = "Loading")
-            is BuoyFinderUiState.Error -> ErrorLoadingMessage(message = "Error Fetching Data")
+            is FisherFinderUiState.Loading -> ErrorLoadingMessage(message = "Loading")
+            is FisherFinderUiState.Error -> ErrorLoadingMessage(message = "Error Fetching Data")
             else -> {}
         }
     }
@@ -150,7 +150,7 @@ fun ResultScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 5.dp, horizontal = 10.dp),
+                .padding(vertical = 5.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -184,15 +184,12 @@ fun ResultScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(400.dp)
-                .padding(top = 16.dp)
+                .height(375.dp)
         )
         {
             OfflineMap(
                 modifier = Modifier
-                    .height(350.dp)
-                    .padding(horizontal = 5.dp)
-                    .border(1.dp, Color.Black),
+                    .height(375.dp),
                 assetData = assetData,
 
                 viewmodel = viewModel
@@ -210,7 +207,6 @@ fun DisplayRefreshMessage(color: Color, message: String) {
         textAlign = TextAlign.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp)
     )
 }
 
@@ -231,7 +227,7 @@ fun DisplayAssetData(
 ) {
     Card(
         modifier = Modifier
-            .padding(top = 10.dp, start = 12.dp, end = 12.dp)
+            .padding(top = 10.dp)
             .wrapContentHeight()
             .fillMaxWidth(),
         elevation = cardElevation(defaultElevation = 0.dp),
@@ -298,7 +294,8 @@ fun DisplayAssetData(
                         rotation = userRotation,
                         heading = movingHeading,
                         headerDisplay = "Heading:",
-                        targetBearing = bearingToBuoy
+                        targetBearing = bearingToBuoy,
+                        color = color
                     )
                 }
             }
@@ -398,7 +395,7 @@ fun DeviceInfo(gpsInfo: AnnotatedString? = null) {
 fun RefreshFeedButton(onGetDataClicked: () -> Unit) {
     Button(
         onClick = onGetDataClicked,
-        modifier = Modifier.padding(top = 40.dp, end = 8.dp),
+        modifier = Modifier.padding(top = 40.dp),
         shape = RectangleShape,
         colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583))
     )
@@ -477,7 +474,7 @@ fun HomeScreenPreview() {
             val viewModel: BuoyFinderViewModel = viewModel()
             val context = LocalContext.current
             HomeScreen(
-                buoyFinderUiState = BuoyFinderUiState.Success(AssetData()),
+                buoyFinderUiState = FisherFinderUiState.Success(AssetData()),
                 onGetDataClicked = { viewModel.getAssetData() },
                 userLocation = viewModel.userLocation,
                 onStartLocationUpdates = {

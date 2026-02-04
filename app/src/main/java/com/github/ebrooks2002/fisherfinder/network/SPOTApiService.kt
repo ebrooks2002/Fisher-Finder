@@ -3,9 +3,9 @@
  * Builds a Retrofit client, calls SPOT Server, gets XML Feed, parses data using simpleXML.
  */
 
-package com.github.ebrooks2002.buoyfinder.network
+package com.github.ebrooks2002.fisherfinder.network
 
-import com.github.ebrooks2002.buoyfinder.model.AssetData
+import com.github.ebrooks2002.fisherfinder.model.AssetData
 import retrofit2.Retrofit
 import retrofit2.converter.simplexml.SimpleXmlConverterFactory
 import retrofit2.http.GET

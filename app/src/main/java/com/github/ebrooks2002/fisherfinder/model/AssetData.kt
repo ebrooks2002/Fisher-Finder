@@ -6,7 +6,7 @@
  * @author Ethan Brooks
  */
 
-package com.github.ebrooks2002.buoyfinder.model
+package com.github.ebrooks2002.fisherfinder.model
 
 import org.simpleframework.xml.Element
 import org.simpleframework.xml.ElementList

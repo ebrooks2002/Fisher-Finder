@@ -1,4 +1,4 @@
-package com.github.ebrooks2002.buoyfinder.location
+package com.github.ebrooks2002.fisherfinder.location
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -37,7 +37,6 @@ class RotationSensor (private val context: Context) {
         val orientationAngles = FloatArray(3)
         val sensorListener = object: SensorEventListener {
 
-
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
             override fun onSensorChanged(event: SensorEvent) {
@@ -58,7 +57,6 @@ class RotationSensor (private val context: Context) {
         awaitClose {
             client.unregisterListener(sensorListener)
         }
-
     }
 
 }

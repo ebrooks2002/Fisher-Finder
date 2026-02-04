@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.github.ebrooks2002.buoyfinder"
+    namespace = "com.github.ebrooks2002.fisherfinder"
     compileSdk {
         version = release(36)
     }
