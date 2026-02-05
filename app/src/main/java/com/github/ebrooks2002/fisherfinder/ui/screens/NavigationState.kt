@@ -1,4 +1,5 @@
 package com.github.ebrooks2002.fisherfinder.ui.screens
+import android.location.Location
 import androidx.compose.ui.text.AnnotatedString
 import com.github.ebrooks2002.fisherfinder.model.Message
 
@@ -18,5 +19,8 @@ data class NavigationState(
     val bearingToBuoy: Float,
     val assetSpeedDisplay: String,
     val color: String,
-    val temaToAsset: Float
+    val temaToAsset: Float,
+    val userLocation: Location?,
+    val userToAsset: Float,
+    val assetPosition: Location
 )

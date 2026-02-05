@@ -186,30 +186,19 @@ class BuoyFinderViewModel : ViewModel(){
         val color = getFreshnessColor(diffMinutes)
         val displayName = selectedMessage?.messengerName?.substringAfterLast("_") ?: "Select an Asset"
         val position = selectedMessage?.let {"Lat: ${it.latitude},\nLong: ${it.longitude}"} ?: "Position unavailable"
-        var temaToAsset: Float = 0f
+        var temaToAsset = 0f
+        var assetPosition = Location("Asset")
+
+        var userToAsset = 0f
         var gpsInfo: AnnotatedString = buildAnnotatedString { append("Waiting for GPS...") }
         if (userLocation != null && selectedMessage != null) {
-            val assetPosition = Location("Buoy").apply { latitude = selectedMessage.latitude; longitude = selectedMessage.longitude}
+            assetPosition = Location("Asset").apply { latitude = selectedMessage.latitude; longitude = selectedMessage.longitude}
             val temaPortCoords = Location("Tema Harbour").apply { latitude = 5.63438; longitude = 0.01674 }
-            val userToAsset = userLocation!!.distanceTo(assetPosition) / 1000
+            userToAsset = userLocation!!.distanceTo(assetPosition) / 1000
             temaToAsset = temaPortCoords.distanceTo(assetPosition) / 1000
             bearingToBuoy = userLocation!!.bearingTo(assetPosition)
             if (userLocation!!.hasSpeed() && userLocation!!.speed > 0.5f) {
                 myHeading = userLocation!!.bearing
-            }
-            gpsInfo = buildAnnotatedString {
-                append("To Asset: %.2f km\n".format(userToAsset))
-                append("Lat: %.4f\n".format(userLocation!!.latitude))
-                append("Lon: %.4f\n".format(userLocation!!.longitude))
-                append("Bearing: %.0f°\n".format(bearingToBuoy))
-                withStyle(style = SpanStyle(color = Color.Red)) {
-                    append("Heading: ")
-                    append(myHeading?.let { "%.0f°".format(it) } ?: "N/A")
-                    append("\n")
-                }
-                withStyle(style = SpanStyle(color = Color.Blue)) {
-                    append("Facing: %.0f° %s".format(userRotation ?: 0f, headingDirection))
-                }
             }
         }
             return NavigationState(
@@ -228,7 +217,10 @@ class BuoyFinderViewModel : ViewModel(){
                 bearingToBuoy = bearingToBuoy,
                 assetSpeedDisplay = assetSpeedDisplay,
                 color = color,
-                temaToAsset = temaToAsset
+                temaToAsset = temaToAsset,
+                userLocation = userLocation,
+                userToAsset = userToAsset,
+                assetPosition = assetPosition
             )
         }
     }

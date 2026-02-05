@@ -57,8 +57,8 @@ fun OfflineMap(
     var isLocationEnabled by remember { mutableStateOf(false) }
 
     val featureCollection = remember(assetState.allMessages, assetState.diffMinutes) {
-
-        val features = assetState.allMessages.map { message ->
+        val sortedMessages = assetState.allMessages.sortedBy { it.parseDate()?.time ?: 0L }
+        val features = sortedMessages.map { message ->
             val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
             feature.addStringProperty("name", message.messengerName?.substringAfterLast("_") ?: "Unknown")
             val time = message?.parseDate()

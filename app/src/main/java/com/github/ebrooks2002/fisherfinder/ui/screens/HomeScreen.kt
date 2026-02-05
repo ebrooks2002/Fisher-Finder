@@ -49,7 +49,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import android.location.Location
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
@@ -85,7 +88,6 @@ fun HomeScreen(
     userRotation: Float?,
     userDirection: String?,
     onStartRotationUpdates: () -> Unit,
-    // ADD THIS PARAMETER
     viewModel: BuoyFinderViewModel = viewModel(),
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
@@ -179,7 +181,10 @@ fun ResultScreen(
             bearingToBuoy = navState.bearingToBuoy,
             assetSpeed = navState.assetSpeedDisplay,
             color = navState.color,
-            temaToAsset = navState.temaToAsset
+            temaToAsset = navState.temaToAsset,
+            userToAsset = navState.userToAsset,
+            userPosition = navState.userLocation,
+            assetPosition = navState.assetPosition
         )
         Box(
             modifier = Modifier
@@ -220,85 +225,70 @@ fun DisplayAssetData(
     outputDateFormat: String,
     outputTimeFormat: String,
     gpsInfo: AnnotatedString? = null,
+    userToAsset: Float,
+    userPosition: Location?,
     color: String,
     assetSpeed: String? = null,
     diffMinutes: String? = null,
-    temaToAsset: Float
+    temaToAsset: Float,
+    assetPosition: Location
 ) {
     Card(
         modifier = Modifier
             .padding(top = 10.dp)
-            .wrapContentHeight()
             .fillMaxWidth(),
         elevation = cardElevation(defaultElevation = 0.dp),
         shape = RectangleShape,
-        colors = cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier
                 .padding(vertical = 20.dp)
-                .wrapContentHeight()
-                .fillMaxWidth(0.99F),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
+            // This Row forces both Columns to be the same height
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(1f)
+                    .aspectRatio(1.5f)
+
             ) {
+                // Left Column: Tracker
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .wrapContentHeight()
-                        .fillMaxWidth(),
-
-                    verticalArrangement = Arrangement.spacedBy(-6.dp),
-                ) {
-                    TrackerInfo(assetName,
-                        position,
-                        outputDateFormat,
-                        outputTimeFormat,
-                        color=color,
-                        diffMinutes = diffMinutes,
-                        assetSpeed = assetSpeed,
-                        temaToAsset = temaToAsset)
-
-                }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .wrapContentHeight()
-                        .fillMaxWidth(),
+                        .fillMaxHeight(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    DeviceInfo(gpsInfo)
+                    TrackerInfo(
+                        assetName, position, outputDateFormat,
+                        outputTimeFormat, color, assetSpeed,
+                        diffMinutes, temaToAsset, assetPosition
+                    )
                 }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(1f)
-            ) {
+
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .wrapContentHeight()
-                        .fillMaxWidth(),
+                        .fillMaxHeight(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Arrow(
-                        rotation = userRotation,
-                        heading = movingHeading,
-                        headerDisplay = "Heading:",
-                        targetBearing = bearingToBuoy,
-                        color = color
+                    DeviceInfo(
+                        userToAsset, userRotation, bearingToBuoy,
+                        userPosition, movingHeading
                     )
                 }
             }
+
+            Arrow(
+                rotation = userRotation,
+                heading = movingHeading,
+                headerDisplay = "Heading:",
+                targetBearing = bearingToBuoy,
+                color = color
+            )
         }
     }
 }
@@ -311,82 +301,140 @@ fun TrackerInfo(assetName: String,
                 color: String,
                 assetSpeed: String? = null,
                 diffMinutes: String? = null,
-                temaToAsset: Float
+                temaToAsset: Float,
+                assetPosition: Location
 ) {
-    Text(
+    Card(
         modifier = Modifier
-            .padding(start=2.dp)
-            .fillMaxWidth(),
-        fontWeight = FontWeight.Bold,
-        fontSize = 15.sp,
-        text = assetName
-    )
-    Text(
-        modifier = Modifier
-            .padding(start=2.dp, top=8.dp, bottom=1.dp)
-            .fillMaxWidth(),
-        fontSize = 15.sp,
-        lineHeight=15.sp,
-        text = position
-    )
-    Text(
-        modifier = Modifier
-            .padding(start=2.dp)
-            .fillMaxWidth(),
-        fontSize = 15.sp,
-        text = "To Tema: %.1f km".format(temaToAsset)
-    )
-    Text(
-        modifier = Modifier
-            .padding(start=2.dp)
-            .fillMaxWidth(),
-        fontSize = 15.sp, text = outputDateFormat
-    )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth(0.97f)
+            .fillMaxHeight(),
+        colors = cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color.DarkGray)
     ) {
         Text(
             modifier = Modifier
-                .padding(start = 2.dp),
-            fontSize = 15.sp, text = outputTimeFormat
+                .padding(top=5.dp)
+                .align(Alignment.CenterHorizontally),
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            text = assetName
         )
-        if (diffMinutes != null) {
-            Text(
-                text= "(" + diffMinutes.toString() + " min. ago" + ")",
-                fontSize = 12.sp,
-                color = Color(android.graphics.Color.parseColor(color)) // move import to top.
-            )
-        }
-    }
         Text(
             modifier = Modifier
-                .padding(start=2.dp)
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            lineHeight = 15.sp,
+            text = "Lat: ${assetPosition.latitude.toString()}"
+        )
+
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            lineHeight = 15.sp,
+            text = "Lon: ${assetPosition.longitude.toString()}"
+        )
+
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            text = "To Tema: %.1f km".format(temaToAsset)
+        )
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp, text = outputDateFormat
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Text(
+                modifier = Modifier
+                    .padding(start=4.dp),
+                fontSize = 15.sp, text = outputTimeFormat
+            )
+            if (diffMinutes != null) {
+                Text(
+                    text = "(" + diffMinutes.toString() + " min. ago" + ")",
+                    fontSize = 12.sp,
+                    color = Color(android.graphics.Color.parseColor(color)) // move import to top.
+                )
+            }
+        }
+        Text(
+            modifier = Modifier
                 .fillMaxWidth(),
             fontSize = 15.sp,
             text = assetSpeed ?: "deez"
         )
+    }
 }
 
 @Composable
-fun DeviceInfo(gpsInfo: AnnotatedString? = null) {
-    Text(
+fun DeviceInfo(
+               userToAsset: Float,
+               userRotation: Float?,
+               bearingToBuoy: Float,
+               userPosition: Location?,
+               movingHeading: Float?
+               ) {
+    Card(
         modifier = Modifier
-            .padding(all=2.dp)
-            .fillMaxWidth(),
-        fontSize = 15.sp,
-        fontWeight = FontWeight.Bold,
-        text = "My Device:"
-    )
+            .fillMaxHeight()
+            .fillMaxWidth(0.97f),
+        colors = cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color.DarkGray)
+    ) {
 
-    if (gpsInfo != null) {
         Text(
             modifier = Modifier
-                .padding(start = 2.dp)
-                .fillMaxWidth(),
+                .padding(top=5.dp)
+                .align(Alignment.CenterHorizontally),
             fontSize = 15.sp,
-            lineHeight = 17.sp,
-            text = gpsInfo
+            fontWeight = FontWeight.Bold,
+            text = "My Device:"
+        )
+
+        val lat = userPosition?.latitude?.let { "%.4f".format(it) } ?: "N/A";
+        val lon = userPosition?.longitude?.let { "%.4f".format(it) } ?: "N/A"
+
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            text = "Lat: $lat"
+        )
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            text = "Long $lon"
+        )
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            text = "To Asset: $userToAsset km"
+        )
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            text = "Bearing: ${bearingToBuoy.toInt()}°"
+        )
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            text = "Heading: ${movingHeading?.toInt() ?: "N/A"}°"
+        )
+        Text(
+            modifier = Modifier
+                .padding(start=4.dp),
+            fontSize = 15.sp,
+            text = "Facing: ${userRotation?.toInt() ?: "N/A"}°"
         )
     }
 }
@@ -405,7 +453,6 @@ fun RefreshFeedButton(onGetDataClicked: () -> Unit) {
             maxLines = 1
         )
     }
-
 }
 
 @Composable
@@ -438,8 +485,7 @@ fun DropDownMenu(
             availableAssets.forEach { assetName ->
                 DropdownMenuItem(text = { Text(text = assetName) }, onClick = {
                     onAssetSelected(assetName)
-                    expanded = false
-                })
+                    expanded = false })
             }
         }
     }
