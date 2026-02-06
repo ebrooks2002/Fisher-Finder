@@ -66,16 +66,33 @@ fun OfflineMap(
             else {
                 Long.MAX_VALUE // If no date, treat as "very old"
             }
-
             feature.addStringProperty("time", message.formattedTime ?: "Unknown Time")
             feature.addStringProperty("date", message.formattedDate ?: "Unknown Date")
             feature.addStringProperty("diffMinutes", diffMinutes.toString())
             feature.addStringProperty("position", (message.latitude.toString() + ", " + message.longitude.toString()) ?: "Unknown Position"
             )
-
             feature
         }
         FeatureCollection.fromFeatures(features)
+    }
+
+    val lineFeatureCollection = remember(assetState.allMessages) {
+        val messagesByAsset = assetState.allMessages
+            .filter { it.messengerName != null }
+            .groupBy { it.messengerName }
+
+        val lineFeatures = messagesByAsset.mapNotNull { (_, messages) ->
+            val sortedPoints = messages
+                .sortedBy { it.parseDate()?.time ?: 0L }
+                .map { Point.fromLngLat(it.longitude, it.latitude) }
+
+            if (sortedPoints.size >= 2) {
+                Feature.fromGeometry(org.maplibre.geojson.LineString.fromLngLats(sortedPoints))
+            } else {
+                null
+            }
+        }
+        FeatureCollection.fromFeatures(lineFeatures)
     }
 
     var styleUrl by remember { mutableStateOf<String?>(null) }
@@ -117,7 +134,6 @@ fun OfflineMap(
                 onCreate(null)
             }
         }
-
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
                 when (event) {
@@ -153,16 +169,26 @@ fun OfflineMap(
                 mapView.apply {
                     getMapAsync { map ->
                         map.setStyle(Style.Builder().fromUri(currentStyleUrl)) { style ->
-                            // ADD BUOY LAYER HERE
-                            val sourceId = "buoys-source"
+                            val sourceId = "assets-source"
+                            val lineSourceId = "lines-source"
+                            style.addSource(GeoJsonSource(lineSourceId, lineFeatureCollection))
                             val source = GeoJsonSource(sourceId, featureCollection)
                             style.addSource(source)
-                            Log.d("buoy", sourceId.toString())
                             isLocationEnabled = enableLocationComponent(context, map, style)
+
+                            val lineLayer = org.maplibre.android.style.layers.LineLayer("lines-layer", lineSourceId)
+                            lineLayer.setProperties(
+                                PropertyFactory.lineColor("#66000000"), // Semi-transparent black
+                                PropertyFactory.lineWidth(2f),
+                                PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
+                                PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
+                            )
+
+                            style.addLayer(lineLayer)
+
                             val circleLayer = CircleLayer("buoys-layer", sourceId)
                             circleLayer.setProperties(
                                 PropertyFactory.circleRadius(6f),
-
                                 PropertyFactory.circleStrokeWidth(
                                     Expression.switchCase(
                                         Expression.eq(Expression.get("name"), Expression.literal(selectedName)),
@@ -248,6 +274,8 @@ fun OfflineMap(
                     if (style != null && style.isFullyLoaded) {
                         val source = map.style?.getSourceAs<GeoJsonSource>("buoys-source")
                         source?.setGeoJson(featureCollection)
+                        val lineSource = style.getSourceAs<GeoJsonSource>("lines-source")
+                        lineSource?.setGeoJson(lineFeatureCollection)
                         val layer = style.getLayerAs<CircleLayer>("buoys-layer")
                         layer?.setProperties(
                             PropertyFactory.circleStrokeWidth(
@@ -271,12 +299,20 @@ fun OfflineMap(
                                     Expression.literal("#FFFFFF")
                                 )
                             ),
+                            PropertyFactory.circleRadius(
+                                Expression.interpolate(
+                                    Expression.linear(),
+                                    Expression.toNumber(Expression.get("diffMinutes")),
+                                    Expression.stop(0, 7f),      // 0 mins ago (Newest): Largest radius
+                                    Expression.stop(90, 2f)    // 120+ mins ago (Oldest): Smallest radius
+                                )
+                            ),
                             PropertyFactory.circleOpacity(
                                 Expression.interpolate(
                                     Expression.linear(),
                                     Expression.toNumber(Expression.get("diffMinutes")),
                                     Expression.stop(0, 1.0f),   // New: Solid
-                                    Expression.stop(120, 0.1f) // Old: Ghostly
+                                    Expression.stop(90, 0.1f) // Old: Ghostly
                                 )
                             ),
                             PropertyFactory.circleColor(
@@ -285,7 +321,7 @@ fun OfflineMap(
                                     Expression.toNumber(Expression.get("diffMinutes")),
                                     Expression.stop(0, Expression.rgb(0, 168, 107)),    // 0 mins: Vibrant Green
                                     Expression.stop(45, Expression.rgb(255, 211, 44)),  // 12 hrs: Yellow
-                                    Expression.stop(120, Expression.rgb(255, 0, 0))     // 24 hrs: Red
+                                    Expression.stop(90, Expression.rgb(255, 0, 0))     // 24 hrs: Red
                                 )
                             ),
                         )

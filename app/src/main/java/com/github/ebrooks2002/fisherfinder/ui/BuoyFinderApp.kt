@@ -25,8 +25,7 @@ import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
 fun BuoyFinderApp() {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color.LightGray
-
+        color = Color(android.graphics.Color.parseColor("#EFEDE8"))
     ) {
         val buoyFinderViewModel: BuoyFinderViewModel = viewModel()
         val context = LocalContext.current

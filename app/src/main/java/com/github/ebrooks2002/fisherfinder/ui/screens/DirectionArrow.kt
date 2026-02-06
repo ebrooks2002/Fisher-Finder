@@ -2,8 +2,10 @@ package com.github.ebrooks2002.fisherfinder.ui.screens
 
 import android.graphics.Color.parseColor
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,6 +89,7 @@ fun Arrow(
                     }
                 )
 
+
                 if (targetBearing != null) {
                     Canvas(
                         modifier = Modifier
@@ -112,6 +116,27 @@ fun Arrow(
                         )
                     }
                 }
+            }
+            Row(
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    modifier = Modifier
+                        .padding(top = 5.dp),
+                    fontSize = 30.sp,
+                    color = Color.Blue,
+                    fontWeight = FontWeight.Bold,
+                    text = rotation?.toInt()
+                        .toString() + "° / "
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(top = 5.dp),
+                    fontSize = 30.sp,
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold,
+                    text = heading?.toInt().toString() + "°"
+                )
             }
         } else {
             Text(

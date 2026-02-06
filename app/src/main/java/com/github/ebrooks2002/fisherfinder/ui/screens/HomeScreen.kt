@@ -56,6 +56,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.material3.Surface
@@ -196,7 +197,6 @@ fun ResultScreen(
                 modifier = Modifier
                     .height(375.dp),
                 assetData = assetData,
-
                 viewmodel = viewModel
             )
         }
@@ -235,10 +235,10 @@ fun DisplayAssetData(
 ) {
     Card(
         modifier = Modifier
-            .padding(top = 10.dp)
             .fillMaxWidth(),
         elevation = cardElevation(defaultElevation = 0.dp),
         shape = RectangleShape,
+        colors = CardDefaults.cardColors(containerColor = Color(android.graphics.Color.parseColor("#EFEDE8")))
     ) {
         Column(
             modifier = Modifier
@@ -281,14 +281,24 @@ fun DisplayAssetData(
                     )
                 }
             }
-
-            Arrow(
-                rotation = userRotation,
-                heading = movingHeading,
-                headerDisplay = "Heading:",
-                targetBearing = bearingToBuoy,
-                color = color
-            )
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.97f)
+                    .padding(top=5.dp)
+                    .wrapContentHeight(),
+                border = BorderStroke(1.dp, Color.DarkGray),
+                colors = cardColors(containerColor = Color.White)
+            ) {
+                Column() {
+                    Arrow(
+                        rotation = userRotation,
+                        heading = movingHeading,
+                        headerDisplay = "Compass:",
+                        targetBearing = bearingToBuoy,
+                        color = color
+                    )
+                }
+            }
         }
     }
 }
@@ -323,7 +333,6 @@ fun TrackerInfo(assetName: String,
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
-            lineHeight = 15.sp,
             text = "Lat: ${assetPosition.latitude.toString()}"
         )
 
@@ -331,7 +340,6 @@ fun TrackerInfo(assetName: String,
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
-            lineHeight = 15.sp,
             text = "Lon: ${assetPosition.longitude.toString()}"
         )
 
@@ -365,9 +373,10 @@ fun TrackerInfo(assetName: String,
         }
         Text(
             modifier = Modifier
+                .padding(start=4.dp)
                 .fillMaxWidth(),
             fontSize = 15.sp,
-            text = assetSpeed ?: "deez"
+            text = assetSpeed ?: "none"
         )
     }
 }
@@ -428,12 +437,14 @@ fun DeviceInfo(
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
+            color = Color.Red,
             text = "Heading: ${movingHeading?.toInt() ?: "N/A"}°"
         )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
+            color = Color.Blue,
             text = "Facing: ${userRotation?.toInt() ?: "N/A"}°"
         )
     }
