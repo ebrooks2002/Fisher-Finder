@@ -438,14 +438,14 @@ fun DeviceInfo(
                 .padding(start=4.dp),
             fontSize = 15.sp,
             color = Color.Red,
-            text = "Heading: ${movingHeading?.toInt() ?: "N/A"}°"
+            text = "Course: ${movingHeading?.toInt() ?: "N/A"}°"
         )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
             color = Color.Blue,
-            text = "Facing: ${userRotation?.toInt() ?: "N/A"}°"
+            text = "Heading: ${userRotation?.toInt() ?: "N/A"}°"
         )
     }
 }
