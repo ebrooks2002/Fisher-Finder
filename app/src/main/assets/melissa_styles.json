@@ -1,0 +1,75 @@
+{
+  "version": 8,
+  "name": "Ghana Global Offline",
+  "sources": {
+    "ghana": {
+      "type": "vector",
+      "url": "{path_to_mbtiles}"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#e6f2ff"
+      }
+    },
+    {
+      "id": "contour-0m",
+      "type": "line",
+      "source": "ghana",
+      "source-layer": "contour0_3857",
+      "paint": {
+        "line-color": "#1f78b4",
+        "line-width": 1.5
+      }
+    },
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "ghana",
+      "source-layer": "ghanaroads_3857",
+      "paint": {
+        "line-color": "#ffcc00",
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          0, 0.5,
+          3, 2
+        ]
+      }
+    },
+    {
+      "id": "contour-50m",
+      "type": "line",
+      "source": "ghana",
+      "source-layer": "contour50_3857",
+      "paint": {
+        "line-color": "#99ccff",
+        "line-width": 0.5
+      }
+    },
+    {
+      "id": "contour-100m",
+      "type": "line",
+      "source": "ghana",
+      "source-layer": "contour100_3857",
+      "paint": {
+        "line-color": "#4da6ff",
+        "line-width": 0.8
+      }
+    },
+    {
+      "id": "contour-500m",
+      "type": "line",
+      "source": "ghana",
+      "source-layer": "contour500_3857",
+      "paint": {
+        "line-color": "#0066cc",
+        "line-width": 1.2
+      }
+    }
+  ]
+}

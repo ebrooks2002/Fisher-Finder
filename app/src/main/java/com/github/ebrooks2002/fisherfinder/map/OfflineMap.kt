@@ -107,11 +107,10 @@ fun OfflineMap(
     LaunchedEffect(context) {
         withContext(Dispatchers.IO) {
             // 1. Copy MBTiles
-            val mbtilesFile = copyAssetToFiles(context, "global_coastline.mbtiles")
-
+            val mbtilesFile = copyAssetToFiles(context, "melissa_map.mbtiles")
             // 2. FORCE copy the Style JSON (overwrite old cached version)
-            val jsonFile = File(context.filesDir, "coastlines_styles1.json")
-            context.assets.open("coastlines_styles1.json").use { input ->
+            val jsonFile = File(context.filesDir, "melissa_styles.json")
+            context.assets.open("melissa_styles.json").use { input ->
                 jsonFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
@@ -124,13 +123,11 @@ fun OfflineMap(
             styleUrl = "file://${jsonFile.absolutePath}"
         }
     }
-
     // 3. Render Map only when style is ready
     if (styleUrl != null) {
         val currentStyleUrl = styleUrl!!
         val mapView = remember {
             MapView(context).apply {
-                // IMPORTANT: onCreate is required for MapLibre/Mapbox to function
                 onCreate(null)
             }
         }
