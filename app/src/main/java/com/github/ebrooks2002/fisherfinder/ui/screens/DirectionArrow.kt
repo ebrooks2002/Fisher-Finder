@@ -43,7 +43,7 @@ fun Arrow(
         Text(
             text = headerDisplay,
             fontWeight = Bold,
-            fontSize = 18.sp,
+            fontSize = 15.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 

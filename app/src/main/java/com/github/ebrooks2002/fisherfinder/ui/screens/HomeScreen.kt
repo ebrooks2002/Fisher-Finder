@@ -154,16 +154,26 @@ fun ResultScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 5.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            DropDownMenu(
-                availableAssets = navState.uniqueAssets,
-                onAssetSelected = { viewModel.selectAsset(it) }, // Update selection in VM
-                currentSelection = navState.displayName
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            RefreshFeedButton(onGetDataClicked = onGetDataClicked)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                DropDownMenu(
+                    availableAssets = navState.uniqueAssets,
+                    onAssetSelected = { viewModel.selectAsset(it) }, // Update selection in VM
+                    currentSelection = navState.displayName
+                )
+            }
+
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                RefreshFeedButton(onGetDataClicked = onGetDataClicked)
+            }
         }
 
         if (loading) DisplayRefreshMessage(Color.Gray, "Refreshing data...")
@@ -277,25 +287,7 @@ fun DisplayAssetData(
                 ) {
                     DeviceInfo(
                         userToAsset, userRotation, bearingToBuoy,
-                        userPosition, movingHeading
-                    )
-                }
-            }
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth(0.97f)
-                    .padding(top=5.dp)
-                    .wrapContentHeight(),
-                border = BorderStroke(1.dp, Color.DarkGray),
-                colors = cardColors(containerColor = Color.White)
-            ) {
-                Column() {
-                    Arrow(
-                        rotation = userRotation,
-                        heading = movingHeading,
-                        headerDisplay = "Compass:",
-                        targetBearing = bearingToBuoy,
-                        color = color
+                        userPosition, movingHeading, color
                     )
                 }
             }
@@ -387,7 +379,8 @@ fun DeviceInfo(
                userRotation: Float?,
                bearingToBuoy: Float,
                userPosition: Location?,
-               movingHeading: Float?
+               movingHeading: Float?,
+               color: String
                ) {
     Card(
         modifier = Modifier
@@ -409,23 +402,23 @@ fun DeviceInfo(
         val lat = userPosition?.latitude?.let { "%.4f".format(it) } ?: "N/A";
         val lon = userPosition?.longitude?.let { "%.4f".format(it) } ?: "N/A"
 
+//        Text(
+//            modifier = Modifier
+//                .padding(start=4.dp),
+//            fontSize = 15.sp,
+//            text = "Lat: $lat"
+//        )
+//        Text(
+//            modifier = Modifier
+//                .padding(start=4.dp),
+//            fontSize = 15.sp,
+//            text = "Long $lon"
+//        )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
-            text = "Lat: $lat"
-        )
-        Text(
-            modifier = Modifier
-                .padding(start=4.dp),
-            fontSize = 15.sp,
-            text = "Long $lon"
-        )
-        Text(
-            modifier = Modifier
-                .padding(start=4.dp),
-            fontSize = 15.sp,
-            text = "To Asset: $userToAsset km"
+            text = "Dist To Canoe: %.2f km".format(userToAsset)
         )
         Text(
             modifier = Modifier
@@ -446,6 +439,13 @@ fun DeviceInfo(
             fontSize = 15.sp,
             color = Color.Blue,
             text = "Heading: ${userRotation?.toInt() ?: "N/A"}°"
+        )
+        Arrow(
+            rotation = userRotation,
+            heading = movingHeading,
+            headerDisplay = "Compass:",
+            targetBearing = bearingToBuoy,
+            color = color
         )
     }
 }
