@@ -154,7 +154,7 @@ class BuoyFinderViewModel : ViewModel(){
      */
     fun processAssetData(assetData: AssetData): NavigationState {
         val messageList = assetData.feedMessageResponse?.messages?.list ?: emptyList()
-        var assetSpeedDisplay = "0.00 km/h"
+        var assetSpeedDisplay = "0.00 Knots"
         val assetHistory = messageList
             .filter { it.messengerName == selectedAssetName }
             .sortedByDescending { it.parseDate()?.time ?: 0L }
@@ -163,7 +163,7 @@ class BuoyFinderViewModel : ViewModel(){
             val previous = assetHistory[1]
             val currentSpeed = getCurrentSpeed(latest, previous)
             if (currentSpeed > 0.0) {
-                assetSpeedDisplay = "%.2f km/h".format(currentSpeed)
+                assetSpeedDisplay = "%.2f knots".format(currentSpeed)
             }
         } else {
             assetSpeedDisplay = "Calculating..."

@@ -20,7 +20,8 @@ fun getCurrentSpeed(latest: Message, previous: Message): Double {
         val distanceKm = distanceMeters / 1000.0
         val timeHours = timeDiffMs / (1000.0 * 60.0 * 60.0)
         val speedKmh = distanceKm / timeHours
-        return speedKmh
+        val speedKnots = speedKmh * 0.539957
+        return speedKnots
     }
     return 0.0
 }
