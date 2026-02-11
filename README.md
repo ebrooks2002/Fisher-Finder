@@ -1,10 +1,8 @@
 # Welcome to Fisher Finder!
 ## About:
-Fisher Finder is an Android app that allows users to locate SPOT TRACE devices. Users can view the coordinates of their deployed SPOT devices, their distance and heading relative to the devices.
+Fisher Finder, developed for Android, is lightweight mobile app to assist users in managing and locating their SPOT TRACE devices.
 
-Fisher Finder is useful for a few reasons. First, SPOT's mobile app doesn't use the GPS coordinates of a user's phone, so it can't calculate distance or heading relative to the device. Secondly, Fisher Finder 
-is lightweight and can run well on older devices. Lastly, Fisher Finder allows device data to be kept for offline use. For example, when before a user leaves an area will cell coverage they can pull device data and
-still see their own location using their phones GPS receiver.
+Why use Fisher Finder? First, SPOT's own mobile app doesn't provide user's own GPS location, which means users don't their relative distance or heading to a TRACE device. Also important, Fisher Finder allows device data to be kept for offline use. When a user leaves an area will cell coverage, the app continues functioning using last received TRACE device data.
 
 ## Getting Started:
 
@@ -19,22 +17,26 @@ still see their own location using their phones GPS receiver.
 Here's what the app should look like:
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/d91ec712-0f5b-4099-8b1a-164e8259d935" width="300" height="650" alt="Buoy Finder Screenshot">
-  <img src="https://github.com/user-attachments/assets/57a5cf62-d89b-4c66-b3ce-c6f8539dd792" width="300" height="650" alt="Buoy Finder Screenshot">
+  <img src="https://github.com/user-attachments/assets/dc013053-f377-4613-9dfc-ad758fe09fed" width="300 height="650" alt="Fisher Finder Screenshot">
 </p>
 
-*Note: My low-budget Samsung A01 doesn't have a magnetometer or accelerometer. Without these, "Currently Facing" won't show.*
 
-The top left button is for selecting which asset's information you want to view. Selecting it will show you:
+
+*Note: Your phone must have a magnetometer and accelerometer for the compass feature to be fully functional.*
+
+The top left button is for selecting which asset's (TRACE device) information you want to view. Selecting it will show you:
  - The assets GPS coordinates
- - Date and time of most recent update 
- - Your distance from asset
- - Bearing to asset
+ - Date and time of most recent update
+ - The asset's distance from Tema Harbour.
+ - Your distance from the asset.
+ - Asset's speed. Warning: speed is calculated by diving distance between last two recorded locations by time between those updates. Therefore, this reading is a general approximation.
 
-Below that, you will be shown:
-- Direction you're moving towards.
-- Direction asset is in.
-- Direction you're pointed towards
+Below that you'll be shown Device Info:
+- Course (Direction you're moving towards).
+- Bearing (Direction asset is in).
+- Heading (Direction your phone is pointed towards).
+- A compass. There are two arrows, red and blue, representing course and heading, respectively. If the user isn't moving, the course arrow will be colored grey.
+The very top of the compass represents 0° North. Ex: If the user's course and heading are north, both arrows will be pointed up. On the circle surrounding the arrows, there will be a dot representing the selected asset. The position of the dot on the circle reflects the "Bearing" reading. Ex: If your selected asset lies 99 ° East of you, it will be on the right side of the circle, as shown in the screenshot above.
 
 The map is centered on the coast of Ghana with bathymetry lines. Assets are projected on the map. Their color (green, yellow, or red) is based on how recently they've sent a satellite signal.
 
