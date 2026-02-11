@@ -33,7 +33,7 @@ import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 import java.io.File
 import java.io.FileOutputStream
-import com.github.ebrooks2002.fisherfinder.ui.screens.BuoyFinderViewModel
+import com.github.ebrooks2002.fisherfinder.ui.screens.FisherFinderViewModel
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
@@ -45,7 +45,7 @@ import org.maplibre.android.style.expressions.Expression
 fun OfflineMap(
     modifier: Modifier = Modifier,
     assetData: AssetData,
-    viewmodel: BuoyFinderViewModel
+    viewmodel: FisherFinderViewModel
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -57,7 +57,11 @@ fun OfflineMap(
     var isLocationEnabled by remember { mutableStateOf(false) }
 
     val featureCollection = remember(assetState.allMessages, assetState.diffMinutes) {
-        val sortedMessages = assetState.allMessages.sortedBy { it.parseDate()?.time ?: 0L }
+        var sortedMessages = assetState.allMessages.sortedBy { it.parseDate()?.time ?: 0L }
+        sortedMessages = sortedMessages
+            .groupBy { it.messengerName }
+            .mapNotNull { it.value.lastOrNull() }
+
         val features = sortedMessages.map { message ->
             val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
             feature.addStringProperty("name", message.messengerName?.substringAfterLast("_") ?: "Unknown")

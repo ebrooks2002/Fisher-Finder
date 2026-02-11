@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.github.ebrooks2002.fisherfinder.ui.screens.BuoyFinderViewModel
+import com.github.ebrooks2002.fisherfinder.ui.screens.FisherFinderViewModel
 import com.github.ebrooks2002.fisherfinder.ui.screens.HomeScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.ebrooks2002.fisherfinder.model.AssetData
@@ -27,12 +27,12 @@ fun BuoyFinderApp() {
         modifier = Modifier.fillMaxSize(),
         color = Color(android.graphics.Color.parseColor("#EFEDE8"))
     ) {
-        val buoyFinderViewModel: BuoyFinderViewModel = viewModel()
+        val buoyFinderViewModel: FisherFinderViewModel = viewModel()
         val context = LocalContext.current
 
         HomeScreen(
-            buoyFinderUiState = buoyFinderViewModel.buoyFinderUiState,
-            onGetDataClicked = {buoyFinderViewModel.getAssetData()},
+            fisherFinderUiState = buoyFinderViewModel.fisherFinderUiState,
+            onGetDataClicked = {buoyFinderViewModel.getAssetData(context)},
             userLocation = buoyFinderViewModel.userLocation,
             onStartLocationUpdates = {buoyFinderViewModel.startLocationTracking(context)},
             userRotation = buoyFinderViewModel.userRotation,
@@ -51,7 +51,7 @@ fun BuoyFinderApp() {
 fun BuoyFinderAppPreview() {
     BuoyFinderTheme {
         HomeScreen(
-            buoyFinderUiState = com.github.ebrooks2002.fisherfinder.ui.screens.FisherFinderUiState.Success(
+            fisherFinderUiState = com.github.ebrooks2002.fisherfinder.ui.screens.FisherFinderUiState.Success(
                 AssetData()
             ),
             onGetDataClicked = {},

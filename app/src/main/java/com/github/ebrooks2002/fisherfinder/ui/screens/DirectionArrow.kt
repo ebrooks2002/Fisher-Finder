@@ -70,7 +70,7 @@ fun Arrow(
                         .graphicsLayer {
                             rotationZ = rotation
                         },
-                    tint = Color.Blue
+                    tint = Color(0xFF254ACF)
                 )
 
                 Icon(
@@ -85,7 +85,7 @@ fun Arrow(
                     tint = if (heading == null) {
                         Color.Gray
                     } else {
-                        Color.Red
+                        Color(0xFFCF2825)
                     }
                 )
 

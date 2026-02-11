@@ -23,10 +23,7 @@ import com.github.ebrooks2002.fisherfinder.model.AssetData
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.ui.Alignment
@@ -50,11 +47,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import android.location.Location
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardDefaults.cardColors
@@ -62,6 +58,9 @@ import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.ebrooks2002.fisherfinder.ui.map.OfflineMap
 import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
@@ -72,7 +71,7 @@ import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
  * refresh button, and error/loading message.
  *
  * @param modifier Modifier to apply to this layout node.
- * @param buoyFinderUiState The current state of the UI.
+ * @param fisherFinderUiState The current state of the UI.
  * @param onGetDataClicked A function to be called when the refresh button is clicked.
  * @param userLocation The current location of the user.
  * @param onStartLocationUpdates A function to start location updates.
@@ -82,16 +81,21 @@ import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
  */
 @Composable
 fun HomeScreen(
-    buoyFinderUiState: FisherFinderUiState,
+    fisherFinderUiState: FisherFinderUiState,
     onGetDataClicked: () -> Unit,
     modifier: Modifier = Modifier, userLocation: Location?,
     onStartLocationUpdates: () -> Unit,
     userRotation: Float?,
     userDirection: String?,
     onStartRotationUpdates: () -> Unit,
-    viewModel: BuoyFinderViewModel = viewModel(),
+    viewModel: FisherFinderViewModel = viewModel(),
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        viewModel.loadCachedData(context)
+        viewModel.getAssetData(context)
+    }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -115,8 +119,12 @@ fun HomeScreen(
 
     var currentAssetData by remember { mutableStateOf<AssetData?>(null) }
 
-    if (buoyFinderUiState is FisherFinderUiState.Success) {
-        currentAssetData = buoyFinderUiState.assetData
+    if (fisherFinderUiState is FisherFinderUiState.Success) {
+        currentAssetData = fisherFinderUiState.assetData
+    }
+
+    if (fisherFinderUiState is FisherFinderUiState.Error ) {
+        currentAssetData = fisherFinderUiState.assetData
     }
 
     if (currentAssetData != null) {
@@ -124,11 +132,11 @@ fun HomeScreen(
             assetData = currentAssetData!!,
             viewModel = viewModel, // Pass the viewModel here
             onGetDataClicked = onGetDataClicked,
-            loading = buoyFinderUiState is FisherFinderUiState.Loading,
-            error = buoyFinderUiState is FisherFinderUiState.Error
+            loading = fisherFinderUiState is FisherFinderUiState.Loading,
+            error = fisherFinderUiState is FisherFinderUiState.Error
         )
     } else {
-        when (buoyFinderUiState) {
+        when (fisherFinderUiState) {
             is FisherFinderUiState.Loading -> ErrorLoadingMessage(message = "Loading")
             is FisherFinderUiState.Error -> ErrorLoadingMessage(message = "Error Fetching Data")
             else -> {}
@@ -139,7 +147,7 @@ fun HomeScreen(
 @Composable
 fun ResultScreen(
     assetData: AssetData,
-    viewModel: BuoyFinderViewModel, // Pass the ViewModel in
+    viewModel: FisherFinderViewModel, // Pass the ViewModel in
     onGetDataClicked: () -> Unit,
     loading: Boolean,
     error: Boolean
@@ -167,7 +175,6 @@ fun ResultScreen(
                     currentSelection = navState.displayName
                 )
             }
-
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
@@ -200,12 +207,13 @@ fun ResultScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(375.dp)
+                .height(400.dp)
+                .padding(top = 20.dp)
         )
         {
             OfflineMap(
                 modifier = Modifier
-                    .height(375.dp),
+                    .height(400.dp),
                 assetData = assetData,
                 viewmodel = viewModel
             )
@@ -252,7 +260,7 @@ fun DisplayAssetData(
     ) {
         Column(
             modifier = Modifier
-                .padding(vertical = 20.dp)
+                .padding(vertical = 10.dp)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -315,23 +323,26 @@ fun TrackerInfo(assetName: String,
     ) {
         Text(
             modifier = Modifier
-                .padding(top=5.dp)
+                .padding(top = 5.dp)
                 .align(Alignment.CenterHorizontally),
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp,
+            letterSpacing = (-0.5).sp,
             text = assetName
         )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
+            letterSpacing = (-0.5).sp,
             text = "Lat: ${assetPosition.latitude.toString()}"
         )
-
+   
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
+            letterSpacing = (-0.5).sp,
             text = "Lon: ${assetPosition.longitude.toString()}"
         )
 
@@ -339,12 +350,14 @@ fun TrackerInfo(assetName: String,
             modifier = Modifier
                 .padding(start=4.dp),
             fontSize = 15.sp,
+            letterSpacing = (-0.5).sp,
             text = "To Tema: %.1f km".format(temaToAsset)
         )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
-            fontSize = 15.sp, text = outputDateFormat
+            letterSpacing = (-0.5).sp,
+            fontSize = 15.sp, text = "Date: " + outputDateFormat
         )
         Row(
             modifier = Modifier
@@ -353,22 +366,25 @@ fun TrackerInfo(assetName: String,
             Text(
                 modifier = Modifier
                     .padding(start=4.dp),
+                letterSpacing = (-0.5).sp,
                 fontSize = 15.sp, text = outputTimeFormat
             )
             if (diffMinutes != null) {
                 Text(
                     text = "(" + diffMinutes.toString() + " min. ago" + ")",
                     fontSize = 12.sp,
+                    letterSpacing = (-0.5).sp,
                     color = Color(android.graphics.Color.parseColor(color)) // move import to top.
                 )
             }
         }
         Text(
             modifier = Modifier
-                .padding(start=4.dp)
+                .padding(start = 4.dp)
                 .fillMaxWidth(),
             fontSize = 15.sp,
-            text = assetSpeed ?: "none"
+            letterSpacing = (-0.5).sp,
+            text = "Speed: " + assetSpeed ?: "none"
         )
     }
 }
@@ -392,7 +408,7 @@ fun DeviceInfo(
 
         Text(
             modifier = Modifier
-                .padding(top=5.dp)
+                .padding(top = 5.dp)
                 .align(Alignment.CenterHorizontally),
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
@@ -417,27 +433,40 @@ fun DeviceInfo(
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
-            fontSize = 15.sp,
-            text = "Dist To Canoe: %.2f km".format(userToAsset)
+            fontSize = 16.sp,
+            letterSpacing = (-0.5).sp,
+            maxLines = 1,
+            text = buildAnnotatedString {
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, fontSize=20.sp)) {
+                    append("%.2f".format(userToAsset)) // Bold Value
+                }
+                withStyle(style = SpanStyle(fontSize = 14.sp)) { // Smaller unit
+                    append(" km")
+                }
+                append(" to canoe")
+            }
         )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
-            fontSize = 15.sp,
+            fontSize = 16.sp,
+            letterSpacing = (-0.5).sp,
             text = "Bearing: ${bearingToBuoy.toInt()}°"
         )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
-            fontSize = 15.sp,
-            color = Color.Red,
+            fontSize = 16.sp,
+            letterSpacing = (-0.5).sp,
+            color = Color(0xFFCF2825), // red
             text = "Course: ${movingHeading?.toInt() ?: "N/A"}°"
         )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
-            fontSize = 15.sp,
-            color = Color.Blue,
+            fontSize = 16.sp,
+            letterSpacing = (-0.5).sp,
+            color = Color(0xFF254ACF), // blue
             text = "Heading: ${userRotation?.toInt() ?: "N/A"}°"
         )
         Arrow(
@@ -455,13 +484,16 @@ fun RefreshFeedButton(onGetDataClicked: () -> Unit) {
     Button(
         onClick = onGetDataClicked,
         modifier = Modifier.padding(top = 40.dp),
-        shape = RectangleShape,
         colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583))
     )
     {
         Text(
             text = "Refresh",
             maxLines = 1
+        )
+        Icon(
+            imageVector = Icons.Filled.Refresh, contentDescription = null,
+            modifier = Modifier.padding(start=5.dp)
         )
     }
 }
@@ -483,7 +515,6 @@ fun DropDownMenu(
     ) { // Adjust this padding to move it up/down
         Button(
             onClick = { expanded = true },
-            shape = RectangleShape,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583))
         ) {
             Text(text = currentSelection ?: "Select Asset")
@@ -528,11 +559,11 @@ fun HomeScreenPreview() {
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
-            val viewModel: BuoyFinderViewModel = viewModel()
+            val viewModel: FisherFinderViewModel = viewModel()
             val context = LocalContext.current
             HomeScreen(
-                buoyFinderUiState = FisherFinderUiState.Success(AssetData()),
-                onGetDataClicked = { viewModel.getAssetData() },
+                fisherFinderUiState = FisherFinderUiState.Success(AssetData()),
+                onGetDataClicked = { viewModel.getAssetData(context) },
                 userLocation = viewModel.userLocation,
                 onStartLocationUpdates = {
                     viewModel.startLocationTracking(context)

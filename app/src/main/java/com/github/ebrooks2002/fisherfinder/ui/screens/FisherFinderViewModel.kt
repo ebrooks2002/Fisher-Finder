@@ -1,6 +1,7 @@
 
 package com.github.ebrooks2002.fisherfinder.ui.screens
 
+import android.content.Context
 import android.hardware.GeomagneticField
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -13,18 +14,15 @@ import com.github.ebrooks2002.fisherfinder.network.SPOTApi
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import android.location.Location
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import com.github.ebrooks2002.fisherfinder.location.LocationFinder
 import com.github.ebrooks2002.fisherfinder.location.RotationSensor
 import com.github.ebrooks2002.fisherfinder.model.Message
 
 sealed interface FisherFinderUiState {
     data class Success(val assetData: AssetData) : FisherFinderUiState
-    object Error : FisherFinderUiState
+    data class Error(val assetData: AssetData) : FisherFinderUiState
     object Loading : FisherFinderUiState
 }
 
@@ -37,8 +35,8 @@ sealed interface FisherFinderUiState {
  * @author E. Brooks
  */
 
-class BuoyFinderViewModel : ViewModel(){
-    var buoyFinderUiState: FisherFinderUiState by mutableStateOf(FisherFinderUiState.Loading)
+class FisherFinderViewModel : ViewModel(){
+    var fisherFinderUiState: FisherFinderUiState by mutableStateOf(FisherFinderUiState.Loading)
         private set
     var userLocation: Location? by mutableStateOf(null)
         private set
@@ -46,6 +44,8 @@ class BuoyFinderViewModel : ViewModel(){
         private set
     var selectedAssetName by mutableStateOf<String?>(null)
         private set
+
+    private val dataPersistenceManager: DataPersistenceManager = DataPersistenceManager()
     private var lastRequestTime: Long = 0
     private val locUpdateInterval = 3000L // user location updates every 3 seconds.
     val headingDirection: String
@@ -58,9 +58,6 @@ class BuoyFinderViewModel : ViewModel(){
         }
 
     // Constructor to call getAssetData
-    init {
-        getAssetData()
-    }
 
     /**
      * Collects the flow from getRotationUpdates and updates userRotation.
@@ -104,22 +101,30 @@ class BuoyFinderViewModel : ViewModel(){
         }
     }
 
+    fun loadCachedData(context: Context) {
+        val cached = dataPersistenceManager.loadDataFromDisk(context)
+        if (cached != null) {
+            fisherFinderUiState = FisherFinderUiState.Success(cached)
+        }
+    }
+
     /**
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
-    fun getAssetData() {
+    fun getAssetData(context: Context) {
         val FIVE_MINUTES_MS = 5 * 60 * 1000
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastRequestTime < FIVE_MINUTES_MS) { return }
         lastRequestTime = currentTime
         viewModelScope.launch {
-            buoyFinderUiState = FisherFinderUiState.Loading
-            buoyFinderUiState = try {
+            fisherFinderUiState = FisherFinderUiState.Loading
+            fisherFinderUiState = try {
                 val allMessages = mutableListOf<Message>()
                 var listResult: AssetData? = null
                 for (i in 0..0) {
                     val start = i * 50
                     val result = SPOTApi.retrofitService.getData(start = start)
+                    dataPersistenceManager.saveDataToDisk(context = context, result)
                     if (listResult == null) {
                         listResult = result
                     }
@@ -133,17 +138,22 @@ class BuoyFinderViewModel : ViewModel(){
                     FisherFinderUiState.Success(listResult)
                 }
                 else {
-                    FisherFinderUiState.Error
+                    val cached = dataPersistenceManager.loadDataFromDisk(context)
+                    FisherFinderUiState.Error(cached ?: AssetData())
                 }
             } catch (e: HttpException) {
                 Log.e("BuoyViewModel", "Network request failed: ${e.code()} ${e.message()}", e)
-                FisherFinderUiState.Error
+                val cached = dataPersistenceManager.loadDataFromDisk(context)
+                FisherFinderUiState.Error(cached ?: AssetData())
             } catch (e: Exception) {
                 Log.e("BuoyViewModel", "Error fetching message ${e.message}", e)
-                FisherFinderUiState.Error
+                val cached = dataPersistenceManager.loadDataFromDisk(context)
+                FisherFinderUiState.Error(cached ?: AssetData())
             }
         }
     }
+
+
 
     fun selectAsset(name: String) {
         selectedAssetName = name

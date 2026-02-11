@@ -21,7 +21,7 @@
       "source": "ghana",
       "source-layer": "contour0_3857",
       "paint": {
-        "line-color": "#1f78b4",
+        "line-color": "#000000",
         "line-width": 1.5
       }
     },
@@ -31,14 +31,8 @@
       "source": "ghana",
       "source-layer": "ghanaroads_3857",
       "paint": {
-        "line-color": "#ffcc00",
-        "line-width": [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          0, 0.5,
-          3, 2
-        ]
+        "line-color": "#000000",
+        "line-width": 1
       }
     },
     {
@@ -48,7 +42,8 @@
       "source-layer": "contour50_3857",
       "paint": {
         "line-color": "#99ccff",
-        "line-width": 0.5
+        "line-width": 0.3,
+        "line-opacity": 0.7
       }
     },
     {
@@ -58,7 +53,8 @@
       "source-layer": "contour100_3857",
       "paint": {
         "line-color": "#4da6ff",
-        "line-width": 0.8
+        "line-width": 0.3,
+        "line-opacity": 0.7
       }
     },
     {
@@ -68,7 +64,8 @@
       "source-layer": "contour500_3857",
       "paint": {
         "line-color": "#0066cc",
-        "line-width": 1.2
+        "line-width": 0.3,
+        "line-opacity": 0.7
       }
     }
   ]
