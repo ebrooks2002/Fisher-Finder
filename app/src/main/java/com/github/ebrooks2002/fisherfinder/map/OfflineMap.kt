@@ -56,47 +56,37 @@ fun OfflineMap(
 
     var isLocationEnabled by remember { mutableStateOf(false) }
 
-    val featureCollection = remember(assetState.allMessages, assetState.diffMinutes) {
-        var sortedMessages = assetState.allMessages.sortedBy { it.parseDate()?.time ?: 0L }
-        sortedMessages = sortedMessages
-            .groupBy { it.messengerName }
-            .mapNotNull { it.value.lastOrNull() }
-
-        val features = sortedMessages.map { message ->
-            val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
-            feature.addStringProperty("name", message.messengerName?.substringAfterLast("_") ?: "Unknown")
-            val time = message?.parseDate()
-            val diffMinutes = if (time != null) {(System.currentTimeMillis() - time.time) / (1000 * 60)}
-            else {
-                Long.MAX_VALUE // If no date, treat as "very old"
-            }
-            feature.addStringProperty("time", message.formattedTime ?: "Unknown Time")
-            feature.addStringProperty("date", message.formattedDate ?: "Unknown Date")
-            feature.addStringProperty("diffMinutes", diffMinutes.toString())
-            feature.addStringProperty("position", (message.latitude.toString() + ", " + message.longitude.toString()) ?: "Unknown Position"
-            )
-            feature
-        }
-        FeatureCollection.fromFeatures(features)
-    }
-
-    val lineFeatureCollection = remember(assetState.allMessages) {
+    val (featureCollection, lineFeatureCollection) = remember(assetState.allMessages) {
         val messagesByAsset = assetState.allMessages
             .filter { it.messengerName != null }
             .groupBy { it.messengerName }
 
-        val lineFeatures = messagesByAsset.mapNotNull { (_, messages) ->
-            val sortedPoints = messages
-                .sortedBy { it.parseDate()?.time ?: 0L }
-                .map { Point.fromLngLat(it.longitude, it.latitude) }
+        val features = mutableListOf<Feature>()
+        val lineFeatures = mutableListOf<Feature>()
 
-            if (sortedPoints.size >= 2) {
-                Feature.fromGeometry(org.maplibre.geojson.LineString.fromLngLats(sortedPoints))
-            } else {
-                null
+        messagesByAsset.forEach { (name, messages) ->
+            val sorted = messages.sortedBy { it.parseDate()?.time ?: 0L }
+
+            // Pin (Latest message only)
+            sorted.lastOrNull()?.let { message ->
+                val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
+                feature.addStringProperty("name", message.messengerName?.substringAfterLast("_") ?: "Unknown")
+                val time = message.parseDate()
+                val diffMinutes = if (time != null) (System.currentTimeMillis() - time.time) / (1000 * 60) else 999L
+
+                feature.addStringProperty("diffMinutes", diffMinutes.toString())
+                feature.addStringProperty("time", message.formattedTime ?: "")
+                feature.addStringProperty("date", message.formattedDate ?: "")
+                features.add(feature)
+            }
+            // Line (Full history)
+            if (sorted.size >= 2) {
+                val points = sorted.map { Point.fromLngLat(it.longitude, it.latitude) }
+                lineFeatures.add(Feature.fromGeometry(org.maplibre.geojson.LineString.fromLngLats(points)))
             }
         }
-        FeatureCollection.fromFeatures(lineFeatures)
+
+        FeatureCollection.fromFeatures(features) to FeatureCollection.fromFeatures(lineFeatures)
     }
 
     var styleUrl by remember { mutableStateOf<String?>(null) }
@@ -190,13 +180,6 @@ fun OfflineMap(
                             val circleLayer = CircleLayer("buoys-layer", sourceId)
                             circleLayer.setProperties(
                                 PropertyFactory.circleRadius(6f),
-                                PropertyFactory.circleStrokeWidth(
-                                    Expression.switchCase(
-                                        Expression.eq(Expression.get("name"), Expression.literal(selectedName)),
-                                        Expression.literal(3f),
-                                        Expression.literal(1f)
-                                    )
-                                ),
 
                                 PropertyFactory.circleColor(
                                     Expression.interpolate(
@@ -273,7 +256,7 @@ fun OfflineMap(
                 mapView.getMapAsync { map ->
                     val style = map.style
                     if (style != null && style.isFullyLoaded) {
-                        val source = map.style?.getSourceAs<GeoJsonSource>("buoys-source")
+                        val source = map.style?.getSourceAs<GeoJsonSource>("assets-source")
                         source?.setGeoJson(featureCollection)
                         val lineSource = style.getSourceAs<GeoJsonSource>("lines-source")
                         lineSource?.setGeoJson(lineFeatureCollection)
@@ -300,14 +283,14 @@ fun OfflineMap(
                                     Expression.literal("#FFFFFF")
                                 )
                             ),
-                            PropertyFactory.circleRadius(
-                                Expression.interpolate(
-                                    Expression.linear(),
-                                    Expression.toNumber(Expression.get("diffMinutes")),
-                                    Expression.stop(0, 7f),      // 0 mins ago (Newest): Largest radius
-                                    Expression.stop(90, 2f)    // 120+ mins ago (Oldest): Smallest radius
-                                )
-                            ),
+//                            PropertyFactory.circleRadius(
+//                                Expression.interpolate(
+//                                    Expression.linear(),
+//                                    Expression.toNumber(Expression.get("diffMinutes")),
+//                                    Expression.stop(0, 7f),      // 0 mins ago (Newest): Largest radius
+//                                    Expression.stop(90, 2f)    // 120+ mins ago (Oldest): Smallest radius
+//                                )
+//                            ),
                             PropertyFactory.circleOpacity(
                                 Expression.interpolate(
                                     Expression.linear(),
