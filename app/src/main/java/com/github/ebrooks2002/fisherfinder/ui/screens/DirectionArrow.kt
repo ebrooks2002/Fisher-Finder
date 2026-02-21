@@ -23,7 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.compose.ui.graphics.nativeCanvas
+import android.graphics.Paint
+import android.graphics.Typeface
 
 @Composable
 fun Arrow(
@@ -61,6 +63,31 @@ fun Arrow(
                     color = Color.Red // Red is standard for North
                 )
 
+                Text(
+                    text = "S",
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter),
+                    fontWeight = Bold,
+                    fontSize = 18.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "E",
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 14.dp),
+                    fontWeight = Bold,
+                    fontSize = 18.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "W",
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start=13.dp),
+                    fontWeight = Bold,
+                    fontSize = 18.sp,
+                )
                 Icon(
                     imageVector = Icons.Outlined.Straight,
                     contentDescription = "Arrow",
@@ -89,7 +116,6 @@ fun Arrow(
                     }
                 )
 
-
                 if (targetBearing != null) {
                     Canvas(
                         modifier = Modifier
@@ -116,27 +142,6 @@ fun Arrow(
                         )
                     }
                 }
-            }
-            Row(
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    modifier = Modifier
-                        .padding(top = 5.dp),
-                    fontSize = 30.sp,
-                    color = Color.Blue,
-                    fontWeight = FontWeight.Bold,
-                    text = rotation?.toInt()
-                        .toString() + "° / "
-                )
-                Text(
-                    modifier = Modifier
-                        .padding(top = 5.dp),
-                    fontSize = 30.sp,
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold,
-                    text = heading?.toInt().toString() + "°"
-                )
             }
         } else {
             Text(
