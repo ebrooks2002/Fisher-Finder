@@ -1,5 +1,4 @@
-
-package com.github.ebrooks2002.fisherfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.viewModel
 
 import android.content.Context
 import android.hardware.GeomagneticField
@@ -18,7 +17,12 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import com.github.ebrooks2002.fisherfinder.location.LocationFinder
 import com.github.ebrooks2002.fisherfinder.location.RotationSensor
+import com.github.ebrooks2002.fisherfinder.model.DataPersistenceManager
 import com.github.ebrooks2002.fisherfinder.model.Message
+import com.github.ebrooks2002.fisherfinder.model.NavigationState
+import com.github.ebrooks2002.fisherfinder.model.getCurrentSpeed
+import com.github.ebrooks2002.fisherfinder.model.getFreshnessColor
+import kotlin.math.round
 
 sealed interface FisherFinderUiState {
     data class Success(val assetData: AssetData) : FisherFinderUiState
@@ -52,7 +56,7 @@ class FisherFinderViewModel : ViewModel(){
         get() {
             val rot = userRotation ?: return "No Magnetometer"
             val directions = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")
-            val index = kotlin.math.round(rot / 45f).toInt() % 8
+            val index = round(rot / 45f).toInt() % 8
             val safeIndex = (index + 8) % 8
             return directions[safeIndex]
         }
@@ -64,7 +68,7 @@ class FisherFinderViewModel : ViewModel(){
      *
      * @param context The application context to retrieve the SensorManager object.
      */
-    fun startRotationTracking(context: android.content.Context) {
+    fun startRotationTracking(context: Context) {
         val rotationClient = RotationSensor(context)
         viewModelScope.launch {
             rotationClient.getRotationUpdates().collect { rotation ->
@@ -91,7 +95,7 @@ class FisherFinderViewModel : ViewModel(){
      *
      * @param context The application context to retrieve the LocationServices object.
      */
-    fun startLocationTracking(context: android.content.Context) {
+    fun startLocationTracking(context: Context) {
         val locationClient = LocationFinder(context)
         viewModelScope.launch {
             // Update every 2 seconds (2000ms)

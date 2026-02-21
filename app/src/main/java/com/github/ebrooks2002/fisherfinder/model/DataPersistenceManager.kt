@@ -1,9 +1,7 @@
-package com.github.ebrooks2002.fisherfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.model
 
 import android.content.Context
 import android.util.Log
-
-import com.github.ebrooks2002.fisherfinder.model.AssetData
 import org.simpleframework.xml.core.Persister
 import java.io.File
 

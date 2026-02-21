@@ -1,7 +1,6 @@
-package com.github.ebrooks2002.fisherfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.model
 
 import android.location.Location
-import com.github.ebrooks2002.fisherfinder.model.Message
 
 fun getCurrentSpeed(latest: Message, previous: Message): Double {
     val time1 = latest.parseDate()?.time ?: 0L

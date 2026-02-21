@@ -1,7 +1,8 @@
-package com.github.ebrooks2002.fisherfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.ui
 
 import android.graphics.Color.parseColor
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,11 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 @Composable
@@ -35,7 +41,7 @@ fun Arrow(
         modifier = modifier
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = headerDisplay,
@@ -122,18 +128,18 @@ fun Arrow(
                             color = Color.Gray.copy(alpha = 0.3f), // Light gray path
                             radius = visualRadius,
                             center = center,
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                            style = Stroke(
                                 width = 1.dp.toPx() // Makes it a ring instead of a solid disk
                             )
                         )
                         val radius = size.minDimension / 2.0f // Slightly inside the border
                         val angleInRad = Math.toRadians(targetBearing.toDouble())
-                        val x = (center.x + radius * kotlin.math.sin(angleInRad)).toFloat()
-                        val y = (center.y - radius * kotlin.math.cos(angleInRad)).toFloat()
+                        val x = (center.x + radius * sin(angleInRad)).toFloat()
+                        val y = (center.y - radius * cos(angleInRad)).toFloat()
                         drawCircle(
                             color = Color(parseColor(color)),
                             radius = 4.dp.toPx(),
-                            center = androidx.compose.ui.geometry.Offset(x, y)
+                            center = Offset(x, y)
                         )
                     }
                 }
@@ -141,7 +147,7 @@ fun Arrow(
         } else {
             Text(
                 text = "Unable to load, likely due to missing magnetometer",
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
 

@@ -2,8 +2,15 @@ package com.github.ebrooks2002.fisherfinder.ui.map
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.graphics.RectF
+import android.graphics.drawable.GradientDrawable
 import android.util.Log
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.PopupWindow
+import android.widget.TextView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,12 +40,17 @@ import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 import java.io.File
 import java.io.FileOutputStream
-import com.github.ebrooks2002.fisherfinder.ui.screens.FisherFinderViewModel
+import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderViewModel
+import kotlinx.coroutines.delay
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.location.permissions.PermissionsManager
+import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.geojson.LineString
 
 
 @Composable
@@ -82,7 +94,7 @@ fun OfflineMap(
             // Line (Full history)
             if (sorted.size >= 2) {
                 val points = sorted.map { Point.fromLngLat(it.longitude, it.latitude) }
-                lineFeatures.add(Feature.fromGeometry(org.maplibre.geojson.LineString.fromLngLats(points)))
+                lineFeatures.add(Feature.fromGeometry(LineString.fromLngLats(points)))
             }
         }
 
@@ -151,7 +163,7 @@ fun OfflineMap(
                     }
                 }
                 if (isLocationEnabled) break
-                kotlinx.coroutines.delay(2000) // Check every 2 seconds until successful
+                delay(2000) // Check every 2 seconds until successful
             }
         }
 
@@ -167,12 +179,12 @@ fun OfflineMap(
                             style.addSource(source)
                             isLocationEnabled = enableLocationComponent(context, map, style)
 
-                            val lineLayer = org.maplibre.android.style.layers.LineLayer("lines-layer", lineSourceId)
+                            val lineLayer = LineLayer("lines-layer", lineSourceId)
                             lineLayer.setProperties(
                                 PropertyFactory.lineColor("#66000000"), // Semi-transparent black
                                 PropertyFactory.lineWidth(2f),
-                                PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
-                                PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
+                                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+                                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
                             )
 
                             style.addLayer(lineLayer)
@@ -338,7 +350,7 @@ private fun copyAssetToFiles(context: Context, fileName: String): File {
 }
 
 @SuppressLint("MissingPermission")
-private fun enableLocationComponent(context: Context, map: org.maplibre.android.maps.MapLibreMap, style: Style) : Boolean {
+private fun enableLocationComponent(context: Context, map: MapLibreMap, style: Style) : Boolean {
     // Check if permissions are granted (You should handle the request logic elsewhere in your UI)
     Log.d("LocationDebug", "Attempting to enable location comp")
     if (PermissionsManager.areLocationPermissionsGranted(context)) {
@@ -363,27 +375,27 @@ private fun enableLocationComponent(context: Context, map: org.maplibre.android.
 
 private fun showBuoyPopup(
     context: Context,
-    parentView: android.view.View,
+    parentView: View,
     anchorX: Float,
     anchorY: Float,
     content: String
 ) {
-    val textView = android.widget.TextView(context).apply {
+    val textView = TextView(context).apply {
         text = content
         textSize = 14f
         setPadding(32, 24, 32, 24)
-        setTextColor(android.graphics.Color.WHITE)
-        val shape = android.graphics.drawable.GradientDrawable().apply {
-            setColor(android.graphics.Color.argb(225, 0, 0, 0))
+        setTextColor(Color.WHITE)
+        val shape = GradientDrawable().apply {
+            setColor(Color.argb(225, 0, 0, 0))
             cornerRadius = 20f
         }
         background = shape
     }
 
-    val popup = android.widget.PopupWindow(
+    val popup = PopupWindow(
         textView,
-        android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-        android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT,
         true
     )
 
@@ -395,6 +407,6 @@ private fun showBuoyPopup(
     val finalX = (screenPos[0] + anchorX).toInt()
     val finalY = (screenPos[1] + anchorY).toInt()
 
-    popup.showAtLocation(parentView, android.view.Gravity.NO_GRAVITY, finalX, finalY)
+    popup.showAtLocation(parentView, Gravity.NO_GRAVITY, finalX, finalY)
 }
 

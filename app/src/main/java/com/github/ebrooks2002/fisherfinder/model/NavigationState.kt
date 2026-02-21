@@ -1,7 +1,7 @@
-package com.github.ebrooks2002.fisherfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.model
+
 import android.location.Location
 import androidx.compose.ui.text.AnnotatedString
-import com.github.ebrooks2002.fisherfinder.model.Message
 
 data class NavigationState(
     val allMessages: List<Message>,

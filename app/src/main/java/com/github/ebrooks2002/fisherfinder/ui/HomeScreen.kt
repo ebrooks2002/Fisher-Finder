@@ -6,7 +6,7 @@
  * and error/loading messages.
  */
 
-package com.github.ebrooks2002.fisherfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -52,7 +52,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.material3.CardDefaults.cardElevation
 import androidx.compose.material3.Surface
@@ -64,6 +63,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.ebrooks2002.fisherfinder.ui.map.OfflineMap
 import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
+import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderUiState
+import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderViewModel
 
 
 /**
@@ -256,7 +257,7 @@ fun DisplayAssetData(
             .fillMaxWidth(),
         elevation = cardElevation(defaultElevation = 0.dp),
         shape = RectangleShape,
-        colors = CardDefaults.cardColors(containerColor = Color(android.graphics.Color.parseColor("#EFEDE8")))
+        colors = cardColors(containerColor = Color(android.graphics.Color.parseColor("#EFEDE8")))
     ) {
         Column(
             modifier = Modifier

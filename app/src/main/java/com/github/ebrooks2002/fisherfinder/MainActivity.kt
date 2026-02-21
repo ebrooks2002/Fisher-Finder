@@ -11,7 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
-import com.github.ebrooks2002.fisherfinder.ui.BuoyFinderApp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
