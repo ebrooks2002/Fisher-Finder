@@ -1,8 +1,8 @@
 # Welcome to Fisher Finder!
 ## About:
-Fisher Finder, developed for Android, is lightweight mobile app to assist users in managing and locating their SPOT TRACE devices.
+Fisher Finder, developed for Android, is a lightweight mobile app to assist users in managing and locating their SPOT TRACE devices.
 
-Why use Fisher Finder? First, SPOT’s mobile app does not display the user’s GPS location, meaning users cannot see their relative distance or heading to a TRACE device. Also important, Fisher Finder allows device data to be kept for offline use. When a user leaves an area with cell coverage, the app continues functioning using last received TRACE device data.
+Why use Fisher Finder? First, SPOT’s mobile app does not display the user’s GPS location, meaning users cannot see their relative distance or heading to a TRACE device. Also, Fisher Finder allows device data to be kept for offline use. When a user leaves an area with cell coverage, the app continues functioning using last received TRACE device data.
 
 ## Getting Started:
 
@@ -44,4 +44,4 @@ If you find any bugs in the app, please create a new issue describing it.
 
 ## Who:
 
-This project is being built and maintained by Ethan Brooks under the guidance of the Omand Lab at University of Rhode Island Graduate School of Oceanography.
+This project is being built and maintained by Ethan Brooks under the guidance of the Omand Lab at the University of Rhode Island Graduate School of Oceanography.
