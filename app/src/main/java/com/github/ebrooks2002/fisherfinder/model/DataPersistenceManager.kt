@@ -5,6 +5,9 @@ import android.util.Log
 import org.simpleframework.xml.core.Persister
 import java.io.File
 
+/**
+ * Manages the saving and loading of asset data from phone's internal storage
+ */
 class DataPersistenceManager {
     private val serializer = Persister()
     private val fileName = "asset_data_cache.xml"
@@ -15,7 +18,6 @@ class DataPersistenceManager {
             // 1. Create a trimmed version of the data
             val trimmedData = trimOldMessages(data)
 
-            // 2. Save the trimmed version
             val file = File(context.filesDir, fileName)
             serializer.write(trimmedData, file)
             Log.d("Persistence", "Saved ${trimmedData.feedMessageResponse?.messages?.list?.size} messages to disk.")
@@ -24,6 +26,9 @@ class DataPersistenceManager {
         }
     }
 
+    /**
+     * Ensures AssetData stays under 500 messages by deleting oldest messages.
+     */
     private fun trimOldMessages(data: AssetData): AssetData {
         val originalList = data.feedMessageResponse?.messages?.list ?: return data
 
@@ -35,12 +40,10 @@ class DataPersistenceManager {
             .toMutableList()
 
         // Create a copy of the data structure with only the trimmed list
-        // Note: SimpleXML usually requires the same object structure
         data.feedMessageResponse?.messages?.list = trimmedList
         return data
     }
 
-    // loadAssetData stays the same as before...
     fun loadDataFromDisk(context: Context): AssetData?{
         return try {
             val file = File(context.filesDir, fileName)
