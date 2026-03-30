@@ -1,9 +1,16 @@
-package com.github.ebrooks2002.buoyfinder.ui.map
+package com.github.ebrooks2002.fisherfinder.ui.map
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.graphics.RectF
+import android.graphics.drawable.GradientDrawable
 import android.util.Log
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.PopupWindow
+import android.widget.TextView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -17,7 +24,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.github.ebrooks2002.buoyfinder.model.AssetData
+import com.github.ebrooks2002.fisherfinder.model.AssetData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.maplibre.android.MapLibre
@@ -33,49 +40,65 @@ import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 import java.io.File
 import java.io.FileOutputStream
-import com.github.ebrooks2002.buoyfinder.ui.screens.BuoyFinderViewModel
+import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderViewModel
+import kotlinx.coroutines.delay
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.location.permissions.PermissionsManager
+import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.geojson.LineString
 
 
 @Composable
 fun OfflineMap(
     modifier: Modifier = Modifier,
     assetData: AssetData,
-    viewmodel: BuoyFinderViewModel
+    viewmodel: FisherFinderViewModel
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // create a nav state object containing attributes like position, asset name, ect.
-    val assetState = viewmodel.getNavigationState(assetData)
+    val assetState = viewmodel.processAssetData(assetData)
     val selectedName = assetState.displayName
 
     var isLocationEnabled by remember { mutableStateOf(false) }
 
-    val featureCollection = remember(assetState.allMessages, assetState.diffMinutes) {
+    val (featureCollection, lineFeatureCollection) = remember(assetState.allMessages) {
+        val messagesByAsset = assetState.allMessages
+            .filter { it.messengerName != null }
+            .groupBy { it.messengerName }
 
-        val features = assetState.allMessages.map { message ->
-            val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
-            feature.addStringProperty("name", message.messengerName?.substringAfterLast("_") ?: "Unknown")
-            val time = message?.parseDate()
-            val diffMinutes = if (time != null) {(System.currentTimeMillis() - time.time) / (1000 * 60)}
-            else {
-                Long.MAX_VALUE // If no date, treat as "very old"
+        val features = mutableListOf<Feature>()
+        val lineFeatures = mutableListOf<Feature>()
+
+        messagesByAsset.forEach { (name, messages) ->
+            val sorted = messages.sortedBy { it.parseDate()?.time ?: 0L }
+
+            // Pin (Latest message only)
+            sorted.lastOrNull()?.let { message ->
+                val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
+                feature.addStringProperty("name", message.messengerName?.substringAfterLast("_") ?: "Unknown")
+                val time = message.parseDate()
+                val diffMinutes = if (time != null) (System.currentTimeMillis() - time.time) / (1000 * 60) else 999L
+
+                feature.addStringProperty("diffMinutes", diffMinutes.toString())
+                feature.addStringProperty("time", message.formattedTime ?: "")
+                feature.addStringProperty("date", message.formattedDate ?: "")
+                features.add(feature)
             }
-
-            feature.addStringProperty("time", message.formattedTime ?: "Unknown Time")
-            feature.addStringProperty("date", message.formattedDate ?: "Unknown Date")
-            feature.addStringProperty("diffMinutes", diffMinutes.toString())
-            feature.addStringProperty("position", (message.latitude.toString() + ", " + message.longitude.toString()) ?: "Unknown Position"
-            )
-
-            feature
+            // Line (Full history)
+            if (sorted.size >= 2) {
+                val points = sorted.map { Point.fromLngLat(it.longitude, it.latitude) }
+                lineFeatures.add(Feature.fromGeometry(LineString.fromLngLats(points)))
+            }
         }
-        FeatureCollection.fromFeatures(features)
+
+        FeatureCollection.fromFeatures(features) to FeatureCollection.fromFeatures(lineFeatures)
     }
 
     var styleUrl by remember { mutableStateOf<String?>(null) }
@@ -90,11 +113,10 @@ fun OfflineMap(
     LaunchedEffect(context) {
         withContext(Dispatchers.IO) {
             // 1. Copy MBTiles
-            val mbtilesFile = copyAssetToFiles(context, "global_coastline.mbtiles")
-
+            val mbtilesFile = copyAssetToFiles(context, "melissa_map.mbtiles")
             // 2. FORCE copy the Style JSON (overwrite old cached version)
-            val jsonFile = File(context.filesDir, "coastlines_styles1.json")
-            context.assets.open("coastlines_styles1.json").use { input ->
+            val jsonFile = File(context.filesDir, "melissa_styles.json")
+            context.assets.open("melissa_styles.json").use { input ->
                 jsonFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
@@ -107,17 +129,14 @@ fun OfflineMap(
             styleUrl = "file://${jsonFile.absolutePath}"
         }
     }
-
     // 3. Render Map only when style is ready
     if (styleUrl != null) {
         val currentStyleUrl = styleUrl!!
         val mapView = remember {
             MapView(context).apply {
-                // IMPORTANT: onCreate is required for MapLibre/Mapbox to function
                 onCreate(null)
             }
         }
-
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
                 when (event) {
@@ -144,7 +163,7 @@ fun OfflineMap(
                     }
                 }
                 if (isLocationEnabled) break
-                kotlinx.coroutines.delay(2000) // Check every 2 seconds until successful
+                delay(2000) // Check every 2 seconds until successful
             }
         }
 
@@ -153,23 +172,26 @@ fun OfflineMap(
                 mapView.apply {
                     getMapAsync { map ->
                         map.setStyle(Style.Builder().fromUri(currentStyleUrl)) { style ->
-                            // ADD BUOY LAYER HERE
-                            val sourceId = "buoys-source"
+                            val sourceId = "assets-source"
+                            val lineSourceId = "lines-source"
+                            style.addSource(GeoJsonSource(lineSourceId, lineFeatureCollection))
                             val source = GeoJsonSource(sourceId, featureCollection)
                             style.addSource(source)
-                            Log.d("buoy", sourceId.toString())
                             isLocationEnabled = enableLocationComponent(context, map, style)
+
+                            val lineLayer = LineLayer("lines-layer", lineSourceId)
+                            lineLayer.setProperties(
+                                PropertyFactory.lineColor("#66000000"), // Semi-transparent black
+                                PropertyFactory.lineWidth(2f),
+                                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+                                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND)
+                            )
+
+                            style.addLayer(lineLayer)
+
                             val circleLayer = CircleLayer("buoys-layer", sourceId)
                             circleLayer.setProperties(
                                 PropertyFactory.circleRadius(6f),
-
-                                PropertyFactory.circleStrokeWidth(
-                                    Expression.switchCase(
-                                        Expression.eq(Expression.get("name"), Expression.literal(selectedName)),
-                                        Expression.literal(3f),
-                                        Expression.literal(1f)
-                                    )
-                                ),
 
                                 PropertyFactory.circleColor(
                                     Expression.interpolate(
@@ -189,7 +211,6 @@ fun OfflineMap(
                                         Expression.stop(120, 0.1f) // Old: Ghostly
                                     )
                                 ),
-
                                 PropertyFactory.circleStrokeColor(
                                     Expression.switchCase(
                                         Expression.eq(Expression.get("name"), Expression.literal(selectedName)),
@@ -204,7 +225,7 @@ fun OfflineMap(
                         val uiSettings = map.uiSettings
                         uiSettings.isZoomGesturesEnabled = true
                         uiSettings.isScrollGesturesEnabled = true
-                        uiSettings.isRotateGesturesEnabled = false
+                        uiSettings.isRotateGesturesEnabled = true
                         uiSettings.isTiltGesturesEnabled = false
                         uiSettings.isLogoEnabled = false
                         uiSettings.isAttributionEnabled = false
@@ -212,13 +233,9 @@ fun OfflineMap(
                         map.addOnMapClickListener { latLng ->
                             // 1. Convert click location to screen pixels
                             val point = map.projection.toScreenLocation(latLng)
-
                             val hitBox =
                                 RectF(point.x - 15, point.y - 15, point.x + 15, point.y + 15)
-
-                            // 2. See if there is a buoy under that pixel
                             val features = map.queryRenderedFeatures(hitBox, "buoys-layer")
-
                             if (features.isNotEmpty()) {
                                 val feature = features[0]
                                 val name = feature.getStringProperty("name")
@@ -251,8 +268,10 @@ fun OfflineMap(
                 mapView.getMapAsync { map ->
                     val style = map.style
                     if (style != null && style.isFullyLoaded) {
-                        val source = map.style?.getSourceAs<GeoJsonSource>("buoys-source")
+                        val source = map.style?.getSourceAs<GeoJsonSource>("assets-source")
                         source?.setGeoJson(featureCollection)
+                        val lineSource = style.getSourceAs<GeoJsonSource>("lines-source")
+                        lineSource?.setGeoJson(lineFeatureCollection)
                         val layer = style.getLayerAs<CircleLayer>("buoys-layer")
                         layer?.setProperties(
                             PropertyFactory.circleStrokeWidth(
@@ -276,12 +295,20 @@ fun OfflineMap(
                                     Expression.literal("#FFFFFF")
                                 )
                             ),
+//                            PropertyFactory.circleRadius(
+//                                Expression.interpolate(
+//                                    Expression.linear(),
+//                                    Expression.toNumber(Expression.get("diffMinutes")),
+//                                    Expression.stop(0, 7f),      // 0 mins ago (Newest): Largest radius
+//                                    Expression.stop(90, 2f)    // 120+ mins ago (Oldest): Smallest radius
+//                                )
+//                            ),
                             PropertyFactory.circleOpacity(
                                 Expression.interpolate(
                                     Expression.linear(),
                                     Expression.toNumber(Expression.get("diffMinutes")),
                                     Expression.stop(0, 1.0f),   // New: Solid
-                                    Expression.stop(120, 0.1f) // Old: Ghostly
+                                    Expression.stop(90, 0.1f) // Old: Ghostly
                                 )
                             ),
                             PropertyFactory.circleColor(
@@ -290,7 +317,7 @@ fun OfflineMap(
                                     Expression.toNumber(Expression.get("diffMinutes")),
                                     Expression.stop(0, Expression.rgb(0, 168, 107)),    // 0 mins: Vibrant Green
                                     Expression.stop(45, Expression.rgb(255, 211, 44)),  // 12 hrs: Yellow
-                                    Expression.stop(120, Expression.rgb(255, 0, 0))     // 24 hrs: Red
+                                    Expression.stop(90, Expression.rgb(255, 0, 0))     // 24 hrs: Red
                                 )
                             ),
                         )
@@ -323,7 +350,7 @@ private fun copyAssetToFiles(context: Context, fileName: String): File {
 }
 
 @SuppressLint("MissingPermission")
-private fun enableLocationComponent(context: Context, map: org.maplibre.android.maps.MapLibreMap, style: Style) : Boolean {
+private fun enableLocationComponent(context: Context, map: MapLibreMap, style: Style) : Boolean {
     // Check if permissions are granted (You should handle the request logic elsewhere in your UI)
     Log.d("LocationDebug", "Attempting to enable location comp")
     if (PermissionsManager.areLocationPermissionsGranted(context)) {
@@ -348,27 +375,27 @@ private fun enableLocationComponent(context: Context, map: org.maplibre.android.
 
 private fun showBuoyPopup(
     context: Context,
-    parentView: android.view.View,
+    parentView: View,
     anchorX: Float,
     anchorY: Float,
     content: String
 ) {
-    val textView = android.widget.TextView(context).apply {
+    val textView = TextView(context).apply {
         text = content
         textSize = 14f
         setPadding(32, 24, 32, 24)
-        setTextColor(android.graphics.Color.WHITE)
-        val shape = android.graphics.drawable.GradientDrawable().apply {
-            setColor(android.graphics.Color.argb(225, 0, 0, 0))
+        setTextColor(Color.WHITE)
+        val shape = GradientDrawable().apply {
+            setColor(Color.argb(225, 0, 0, 0))
             cornerRadius = 20f
         }
         background = shape
     }
 
-    val popup = android.widget.PopupWindow(
+    val popup = PopupWindow(
         textView,
-        android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-        android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT,
         true
     )
 
@@ -380,6 +407,6 @@ private fun showBuoyPopup(
     val finalX = (screenPos[0] + anchorX).toInt()
     val finalY = (screenPos[1] + anchorY).toInt()
 
-    popup.showAtLocation(parentView, android.view.Gravity.NO_GRAVITY, finalX, finalY)
+    popup.showAtLocation(parentView, Gravity.NO_GRAVITY, finalX, finalY)
 }
 

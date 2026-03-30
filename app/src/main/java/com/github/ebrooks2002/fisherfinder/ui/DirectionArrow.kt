@@ -1,19 +1,14 @@
-package com.github.ebrooks2002.buoyfinder.ui.screens
+package com.github.ebrooks2002.fisherfinder.ui
 
-import android.hardware.GeomagneticField
-import android.location.Location
-import android.util.Log
+import android.graphics.Color.parseColor
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.North
-import androidx.compose.material.icons.outlined.North
 import androidx.compose.material.icons.outlined.Straight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -21,17 +16,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 @Composable
 fun Arrow(
     rotation: Float?,
     heading: Float?,
+    color: String,
     headerDisplay: String,
     targetBearing: Float? = null,
     modifier: Modifier = Modifier
@@ -40,12 +41,12 @@ fun Arrow(
         modifier = modifier
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = headerDisplay,
             fontWeight = Bold,
-            fontSize = 18.sp,
+            fontSize = 15.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
@@ -63,6 +64,31 @@ fun Arrow(
                     color = Color.Red // Red is standard for North
                 )
 
+                Text(
+                    text = "S",
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter),
+                    fontWeight = Bold,
+                    fontSize = 18.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "E",
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 14.dp),
+                    fontWeight = Bold,
+                    fontSize = 18.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "W",
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start=13.dp),
+                    fontWeight = Bold,
+                    fontSize = 18.sp,
+                )
                 Icon(
                     imageVector = Icons.Outlined.Straight,
                     contentDescription = "Arrow",
@@ -72,7 +98,7 @@ fun Arrow(
                         .graphicsLayer {
                             rotationZ = rotation
                         },
-                    tint = Color.Blue
+                    tint = Color(0xFF254ACF)
                 )
 
                 Icon(
@@ -87,41 +113,33 @@ fun Arrow(
                     tint = if (heading == null) {
                         Color.Gray
                     } else {
-                        Color.Red
+                        Color(0xFFCF2825)
                     }
-
                 )
 
                 if (targetBearing != null) {
-                    // We subtract the device rotation because the compass "rotates"
-                    // relative to your physical orientation
                     Canvas(
                         modifier = Modifier
                             .fillMaxSize()
                     ){
-
                         val visualRadius = (size.minDimension / 2.0f) - 4.dp.toPx()
-
-                        // 2. Draw the Path (The Ring)
+                        // 2. Draw the Path
                         drawCircle(
                             color = Color.Gray.copy(alpha = 0.3f), // Light gray path
                             radius = visualRadius,
                             center = center,
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                            style = Stroke(
                                 width = 1.dp.toPx() // Makes it a ring instead of a solid disk
                             )
                         )
-
                         val radius = size.minDimension / 2.0f // Slightly inside the border
                         val angleInRad = Math.toRadians(targetBearing.toDouble())
-
-                        val x = (center.x + radius * kotlin.math.sin(angleInRad)).toFloat()
-                        val y = (center.y - radius * kotlin.math.cos(angleInRad)).toFloat()
-
+                        val x = (center.x + radius * sin(angleInRad)).toFloat()
+                        val y = (center.y - radius * cos(angleInRad)).toFloat()
                         drawCircle(
-                            color = Color.Blue, // Target color
+                            color = Color(parseColor(color)),
                             radius = 4.dp.toPx(),
-                            center = androidx.compose.ui.geometry.Offset(x, y)
+                            center = Offset(x, y)
                         )
                     }
                 }
@@ -129,7 +147,7 @@ fun Arrow(
         } else {
             Text(
                 text = "Unable to load, likely due to missing magnetometer",
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
 

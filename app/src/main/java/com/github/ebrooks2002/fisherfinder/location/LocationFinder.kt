@@ -1,4 +1,4 @@
-package com.github.ebrooks2002.buoyfinder.location
+package com.github.ebrooks2002.fisherfinder.location
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
