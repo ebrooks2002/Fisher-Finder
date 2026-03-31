@@ -1,7 +1,8 @@
-package com.github.ebrooks2002.fisherfinder.model
+package com.github.ebrooks2002.fisherfinder.data
 
 import android.content.Context
 import android.util.Log
+import com.github.ebrooks2002.fisherfinder.model.AssetData
 import org.simpleframework.xml.core.Persister
 import java.io.File
 

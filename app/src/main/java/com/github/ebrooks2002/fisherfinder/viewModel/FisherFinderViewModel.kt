@@ -17,11 +17,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import com.github.ebrooks2002.fisherfinder.location.LocationFinder
 import com.github.ebrooks2002.fisherfinder.location.RotationSensor
-import com.github.ebrooks2002.fisherfinder.model.DataPersistenceManager
+import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
 import com.github.ebrooks2002.fisherfinder.model.Message
 import com.github.ebrooks2002.fisherfinder.model.NavigationState
-import com.github.ebrooks2002.fisherfinder.model.getCurrentSpeed
-import com.github.ebrooks2002.fisherfinder.model.getFreshnessColor
+import com.github.ebrooks2002.fisherfinder.data.getCurrentSpeed
+import com.github.ebrooks2002.fisherfinder.data.getFreshnessColor
 import kotlin.math.round
 
 sealed interface FisherFinderUiState {
@@ -127,7 +127,7 @@ class FisherFinderViewModel : ViewModel(){
                 var listResult: AssetData? = null
                 for (i in 0..0) {
                     val start = i * 50
-                    val result = SPOTApi.retrofitService.getData(start = start)
+                    val result = SPOTApi.retrofitService.getData(start = start) // Making call to spot server using SPOTAPi Object.
                     dataPersistenceManager.saveDataToDisk(context = context, result)
                     if (listResult == null) {
                         listResult = result

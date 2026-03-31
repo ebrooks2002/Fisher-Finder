@@ -1,12 +1,11 @@
 package com.github.ebrooks2002.fisherfinder
 
 import com.github.ebrooks2002.fisherfinder.model.Message
-import com.github.ebrooks2002.fisherfinder.model.getFreshnessColor
+import com.github.ebrooks2002.fisherfinder.data.getFreshnessColor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
-import java.util.TimeZone
 import kotlin.math.round
 
 /**
