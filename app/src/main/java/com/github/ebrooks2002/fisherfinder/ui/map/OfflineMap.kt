@@ -52,7 +52,6 @@ import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.geojson.LineString
 
-
 @Composable
 fun OfflineMap(
     modifier: Modifier = Modifier,
@@ -62,7 +61,6 @@ fun OfflineMap(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // create a nav state object containing attributes like position, asset name, ect.
     val assetState = viewmodel.processAssetData(assetData)
     val selectedName = assetState.displayName
 
@@ -78,7 +76,6 @@ fun OfflineMap(
 
         messagesByAsset.forEach { (name, messages) ->
             val sorted = messages.sortedBy { it.parseDate()?.time ?: 0L }
-
             // Pin (Latest message only)
             sorted.lastOrNull()?.let { message ->
                 val feature = Feature.fromGeometry(Point.fromLngLat(message.longitude, message.latitude))
@@ -97,24 +94,19 @@ fun OfflineMap(
                 lineFeatures.add(Feature.fromGeometry(LineString.fromLngLats(points)))
             }
         }
-
         FeatureCollection.fromFeatures(features) to FeatureCollection.fromFeatures(lineFeatures)
     }
 
     var styleUrl by remember { mutableStateOf<String?>(null) }
 
-    // 1. Initialize MapLibre (Once)
     DisposableEffect(Unit) {
         MapLibre.getInstance(context)
         onDispose { }
     }
 
-    // 2. Prepare files in the background (Prevents UI Freeze)
     LaunchedEffect(context) {
         withContext(Dispatchers.IO) {
-            // 1. Copy MBTiles
-            val mbtilesFile = copyAssetToFiles(context, "melissa_map.mbtiles")
-            // 2. FORCE copy the Style JSON (overwrite old cached version)
+            val mbtilesFile = copyAssetToFiles(context, "worldborder3.mbtiles")
             val jsonFile = File(context.filesDir, "melissa_styles.json")
             context.assets.open("melissa_styles.json").use { input ->
                 jsonFile.outputStream().use { output ->
@@ -129,7 +121,7 @@ fun OfflineMap(
             styleUrl = "file://${jsonFile.absolutePath}"
         }
     }
-    // 3. Render Map only when style is ready
+
     if (styleUrl != null) {
         val currentStyleUrl = styleUrl!!
         val mapView = remember {
