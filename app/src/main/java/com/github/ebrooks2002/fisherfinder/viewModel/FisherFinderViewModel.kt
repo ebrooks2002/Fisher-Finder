@@ -39,7 +39,6 @@ sealed interface FisherFinderUiState {
  *
  * @author E. Brooks
  */
-
 class FisherFinderViewModel : ViewModel() {
     var fisherFinderUiState: FisherFinderUiState by mutableStateOf(FisherFinderUiState.Loading)
         private set
