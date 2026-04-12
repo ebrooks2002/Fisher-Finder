@@ -15,6 +15,12 @@ import retrofit2.HttpException
 import android.location.Location
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.ViewModelProvider.Factory
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.github.ebrooks2002.fisherfinder.FisherFinderApplication
 import com.github.ebrooks2002.fisherfinder.data.AssetRepository
 import com.github.ebrooks2002.fisherfinder.location.LocationFinder
 import com.github.ebrooks2002.fisherfinder.location.RotationSensor
@@ -39,7 +45,7 @@ sealed interface FisherFinderUiState {
  *
  * @author E. Brooks
  */
-class FisherFinderViewModel : ViewModel() {
+class FisherFinderViewModel(assetRepository: AssetRepository) : ViewModel() {
     var fisherFinderUiState: FisherFinderUiState by mutableStateOf(FisherFinderUiState.Loading)
         private set
     var userLocation: Location? by mutableStateOf(null)
@@ -49,8 +55,9 @@ class FisherFinderViewModel : ViewModel() {
     var selectedAssetName by mutableStateOf<String?>(null)
         private set
 
-    private val assetRepository: AssetRepository = AssetRepository()
+
     private val dataPersistenceManager: DataPersistenceManager = DataPersistenceManager()
+
     private var lastRequestTime: Long = 0
     private val locUpdateInterval = 3000L // user location updates every 3 seconds.
     val headingDirection: String
@@ -115,7 +122,7 @@ class FisherFinderViewModel : ViewModel() {
     /**
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
-    fun getAssetData(context: Context) {
+    fun getAssetData(assetRepository: AssetRepository, context: Context) {
         val FIVE_MINUTES_MS = 5 * 60 * 1000
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastRequestTime < FIVE_MINUTES_MS) {
@@ -124,7 +131,7 @@ class FisherFinderViewModel : ViewModel() {
         lastRequestTime = currentTime
         viewModelScope.launch {
             fisherFinderUiState = FisherFinderUiState.Loading
-            val listResult = assetRepository.fetchData(context)
+            val listResult = assetRepository.fetchData(dataPersistenceManager, context)
             fisherFinderUiState = FisherFinderUiState.Success(listResult)
         }
     }
@@ -211,5 +218,16 @@ class FisherFinderViewModel : ViewModel() {
                 assetPosition = assetPosition
             )
         }
+    companion object {
+        val Factory: Factory
+            get() = viewModelFactory {
+                initializer {
+                    val application = (this[APPLICATION_KEY] as FisherFinderApplication)
+                    val fisherFinderRepository = application.container.assetDataRepository
+                    FisherFinderViewModel(assetRepository = fisherFinderRepository)
+                }
+            }
     }
+}
+
 

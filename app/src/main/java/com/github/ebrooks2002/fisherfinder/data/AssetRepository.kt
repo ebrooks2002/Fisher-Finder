@@ -5,16 +5,14 @@ import com.github.ebrooks2002.fisherfinder.model.AssetData
 import com.github.ebrooks2002.fisherfinder.model.Message
 import com.github.ebrooks2002.fisherfinder.network.SPOTApi
 
-class AssetRepository() {
-
-    private val dataPersistenceManager = DataPersistenceManager()
+class AssetRepository(dataPersistenceManager: DataPersistenceManager) {
 
     /**
      * Tries to fetch call .getData(), saves result to disk, the loads the data to
      * the disk for offline use. If the .getDat() request fails,
      * we load data from disk and return cached.
      */
-    suspend fun fetchData(context: Context): AssetData? {
+    suspend fun fetchData(dataPersistenceManager: DataPersistenceManager,context: Context): AssetData? {
         var listResult: AssetData? = null
         val allMessages = mutableListOf<Message>()
         for (i in 0..2) {

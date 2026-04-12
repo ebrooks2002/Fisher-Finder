@@ -17,6 +17,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.github.ebrooks2002.fisherfinder.data.AssetRepository
+import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
 import com.github.ebrooks2002.fisherfinder.model.AssetData
 import com.github.ebrooks2002.fisherfinder.ui.HomeScreen
 import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
@@ -28,17 +30,20 @@ fun BuoyFinderApp() {
         modifier = Modifier.fillMaxSize(),
         color = Color(android.graphics.Color.parseColor("#EFEDE8"))
     ) {
-        val buoyFinderViewModel: FisherFinderViewModel = viewModel()
+        val fisherFinderViewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory)
         val context = LocalContext.current
+        val dataPersistenceManager = DataPersistenceManager()
+        val assetRepository = AssetRepository(dataPersistenceManager)
 
         HomeScreen(
-            fisherFinderUiState = buoyFinderViewModel.fisherFinderUiState,
-            onGetDataClicked = { buoyFinderViewModel.getAssetData(context) },
-            userLocation = buoyFinderViewModel.userLocation,
-            onStartLocationUpdates = { buoyFinderViewModel.startLocationTracking(context) },
-            userRotation = buoyFinderViewModel.userRotation,
-            userDirection = buoyFinderViewModel.headingDirection,
-            onStartRotationUpdates = { buoyFinderViewModel.startRotationTracking(context) }
+            assetRepository =  assetRepository ,
+            fisherFinderUiState = fisherFinderViewModel.fisherFinderUiState,
+            onGetDataClicked = { fisherFinderViewModel.getAssetData(assetRepository, context) },
+            userLocation = fisherFinderViewModel.userLocation,
+            onStartLocationUpdates = { fisherFinderViewModel.startLocationTracking(context) },
+            userRotation = fisherFinderViewModel.userRotation,
+            userDirection = fisherFinderViewModel.headingDirection,
+            onStartRotationUpdates = { fisherFinderViewModel.startRotationTracking(context) }
         )
     }
 }
@@ -61,6 +66,7 @@ fun BuoyFinderAppPreview() {
             userRotation = 0f,
             userDirection = "N",
             onStartRotationUpdates = {},
+            assetRepository = AssetRepository(DataPersistenceManager())
         )
     }
 }

@@ -67,6 +67,8 @@ import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
 import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderUiState
 import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderViewModel
 import androidx.core.graphics.toColorInt
+import com.github.ebrooks2002.fisherfinder.data.AssetRepository
+import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
 
 
 /**
@@ -84,6 +86,7 @@ import androidx.core.graphics.toColorInt
  */
 @Composable
 fun HomeScreen(
+    assetRepository: AssetRepository,
     fisherFinderUiState: FisherFinderUiState,
     onGetDataClicked: () -> Unit,
     modifier: Modifier = Modifier, userLocation: Location?,
@@ -92,12 +95,11 @@ fun HomeScreen(
     userDirection: String?,
     onStartRotationUpdates: () -> Unit,
     viewModel: FisherFinderViewModel = viewModel(),
-    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         viewModel.loadCachedData(context)
-        viewModel.getAssetData(context)
+        viewModel.getAssetData(assetRepository = assetRepository, context=context)
     }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -553,8 +555,10 @@ fun HomeScreenPreview() {
             val viewModel: FisherFinderViewModel = viewModel()
             val context = LocalContext.current
             HomeScreen(
+                assetRepository = AssetRepository(DataPersistenceManager()),
                 fisherFinderUiState = FisherFinderUiState.Success(AssetData()),
-                onGetDataClicked = { viewModel.getAssetData(context) },
+                onGetDataClicked = { viewModel.getAssetData(assetRepository = AssetRepository(DataPersistenceManager()
+                ),context) },
                 userLocation = viewModel.userLocation,
                 onStartLocationUpdates = {
                     viewModel.startLocationTracking(context)
