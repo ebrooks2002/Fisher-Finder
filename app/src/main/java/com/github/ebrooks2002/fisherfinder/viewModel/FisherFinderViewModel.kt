@@ -125,7 +125,7 @@ class FisherFinderViewModel : ViewModel(){
             fisherFinderUiState = try {
                 val allMessages = mutableListOf<Message>()
                 var listResult: AssetData? = null
-                for (i in 0..0) {
+                for (i in 0..4) {
                     val start = i * 50
                     val result = SPOTApi.retrofitService.getData(start = start)
                     dataPersistenceManager.saveDataToDisk(context = context, result)
