@@ -17,8 +17,10 @@ Why use Fisher Finder? First, SPOT’s mobile app does not display the user’s 
 Here's what the app should look like:
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/dc013053-f377-4613-9dfc-ad758fe09fed" width="300 height="650" alt="Fisher Finder Screenshot">
+  <img src="https://github.com/user-attachments/assets/dc013053-f377-4613-9dfc-ad758fe09fed" width="300" height="650" alt="Fisher Finder Screenshot">
+  <img src="https://github.com/user-attachments/assets/7ae4dda4-f9da-4462-bfa9-d1dc58dfef10" width = "300" height="650" alt="Fisher Finder Screenshot">
 </p>
+
 
 *Note: Your phone must have a magnetometer and accelerometer for the compass feature to be fully functional.*
 
