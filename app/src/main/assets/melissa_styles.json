@@ -1,6 +1,6 @@
 {
   "version": 8,
-  "name": "Ghana Global Offline",
+  "name": "Oceanography Offline Style",
   "sources": {
     "ghana": {
       "type": "vector",
@@ -19,19 +19,19 @@
       "id": "contour-0m",
       "type": "line",
       "source": "ghana",
-      "source-layer": "contour0_3857",
+      "source-layer": "ne_50m_coastline",
       "paint": {
         "line-color": "#000000",
         "line-width": 1.5
       }
     },
     {
-      "id": "roads",
+      "id": "admin-borders",
       "type": "line",
       "source": "ghana",
-      "source-layer": "ghanaroads_3857",
+      "source-layer": "ne_10m_admin_0_boundary_lines_land",
       "paint": {
-        "line-color": "#000000",
+        "line-color": "#444444",
         "line-width": 1
       }
     },
@@ -39,7 +39,7 @@
       "id": "contour-50m",
       "type": "line",
       "source": "ghana",
-      "source-layer": "contour50_3857",
+      "source-layer": "contour_50m (1) — contour",
       "paint": {
         "line-color": "#99ccff",
         "line-width": 0.3,
@@ -50,7 +50,7 @@
       "id": "contour-100m",
       "type": "line",
       "source": "ghana",
-      "source-layer": "contour100_3857",
+      "source-layer": "contour_100m (1) — contour",
       "paint": {
         "line-color": "#4da6ff",
         "line-width": 0.3,
@@ -61,7 +61,7 @@
       "id": "contour-500m",
       "type": "line",
       "source": "ghana",
-      "source-layer": "contour500_3857",
+      "source-layer": "contour_500m (1) — contour",
       "paint": {
         "line-color": "#0066cc",
         "line-width": 0.3,
