@@ -32,13 +32,11 @@ fun BuoyFinderApp() {
     ) {
         val fisherFinderViewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory)
         val context = LocalContext.current
-        val dataPersistenceManager = DataPersistenceManager()
-        val assetRepository = AssetRepository(dataPersistenceManager)
-
+        val assetRepository = fisherFinderViewModel.assetRepository
         HomeScreen(
             assetRepository =  assetRepository ,
             fisherFinderUiState = fisherFinderViewModel.fisherFinderUiState,
-            onGetDataClicked = { fisherFinderViewModel.getAssetData(assetRepository, context) },
+            onGetDataClicked = { fisherFinderViewModel.getAssetData(context) },
             userLocation = fisherFinderViewModel.userLocation,
             onStartLocationUpdates = { fisherFinderViewModel.startLocationTracking(context) },
             userRotation = fisherFinderViewModel.userRotation,
@@ -48,25 +46,3 @@ fun BuoyFinderApp() {
     }
 }
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    device = "id:pixel_5"
-)
-@Composable
-fun BuoyFinderAppPreview() {
-    BuoyFinderTheme {
-        HomeScreen(
-            fisherFinderUiState = FisherFinderUiState.Success(
-                AssetData()
-            ),
-            onGetDataClicked = {},
-            userLocation = null,
-            onStartLocationUpdates = {},
-            userRotation = 0f,
-            userDirection = "N",
-            onStartRotationUpdates = {},
-            assetRepository = AssetRepository(DataPersistenceManager())
-        )
-    }
-}

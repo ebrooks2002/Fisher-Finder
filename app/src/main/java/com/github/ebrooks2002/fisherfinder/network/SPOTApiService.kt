@@ -46,8 +46,8 @@ interface SPOTApiService {
     ): AssetData
 }
 
-object SPOTApi {
-    val retrofitService: SPOTApiService by lazy {
-        retrofit.create(SPOTApiService::class.java)
-    }
-}
+
+
+
+
+

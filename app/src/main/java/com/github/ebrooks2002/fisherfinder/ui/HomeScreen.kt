@@ -67,6 +67,7 @@ import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
 import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderUiState
 import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderViewModel
 import androidx.core.graphics.toColorInt
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.ebrooks2002.fisherfinder.data.AssetRepository
 import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
 
@@ -94,12 +95,12 @@ fun HomeScreen(
     userRotation: Float?,
     userDirection: String?,
     onStartRotationUpdates: () -> Unit,
-    viewModel: FisherFinderViewModel = viewModel(),
+    viewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory),
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         viewModel.loadCachedData(context)
-        viewModel.getAssetData(assetRepository = assetRepository, context=context)
+        viewModel.getAssetData(context=context)
     }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -552,13 +553,12 @@ fun HomeScreenPreview() {
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
-            val viewModel: FisherFinderViewModel = viewModel()
+            val viewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory)
             val context = LocalContext.current
             HomeScreen(
-                assetRepository = AssetRepository(DataPersistenceManager()),
+                assetRepository = viewModel.assetRepository,
                 fisherFinderUiState = FisherFinderUiState.Success(AssetData()),
-                onGetDataClicked = { viewModel.getAssetData(assetRepository = AssetRepository(DataPersistenceManager()
-                ),context) },
+                onGetDataClicked = { viewModel.getAssetData(context) },
                 userLocation = viewModel.userLocation,
                 onStartLocationUpdates = {
                     viewModel.startLocationTracking(context)

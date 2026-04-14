@@ -3,22 +3,24 @@ package com.github.ebrooks2002.fisherfinder.data
 import android.content.Context
 import com.github.ebrooks2002.fisherfinder.model.AssetData
 import com.github.ebrooks2002.fisherfinder.model.Message
-import com.github.ebrooks2002.fisherfinder.network.SPOTApi
+import com.github.ebrooks2002.fisherfinder.network.SPOTApiService
 
-class AssetRepository(dataPersistenceManager: DataPersistenceManager) {
+class AssetRepository(
+    val retrofitService: SPOTApiService,
+    val dataPersistenceManager: DataPersistenceManager) {
 
     /**
      * Tries to fetch call .getData(), saves result to disk, the loads the data to
      * the disk for offline use. If the .getDat() request fails,
      * we load data from disk and return cached.
      */
-    suspend fun fetchData(dataPersistenceManager: DataPersistenceManager,context: Context): AssetData? {
+    suspend fun fetchData(context: Context): AssetData? {
         var listResult: AssetData? = null
         val allMessages = mutableListOf<Message>()
         for (i in 0..2) {
             val start = i * 50
             try {
-                val result = SPOTApi.retrofitService.getData(start = start)
+                val result = retrofitService.getData(start = start)
                 listResult = result
                 val messages = result?.feedMessageResponse?.messages?.list ?: emptyList()
                 allMessages.addAll(messages)

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 android {
@@ -59,6 +60,9 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("org.maplibre.gl:android-sdk:11.8.0") // Check for latest version
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
+
+
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.graphics.shapes)
     implementation(libs.androidx.material3)
