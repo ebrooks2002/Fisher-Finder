@@ -15,17 +15,24 @@ import retrofit2.HttpException
 import android.location.Location
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.ViewModelProvider.Factory
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.github.ebrooks2002.fisherfinder.FisherFinderApplication
+import com.github.ebrooks2002.fisherfinder.data.AssetRepository
 import com.github.ebrooks2002.fisherfinder.location.LocationFinder
 import com.github.ebrooks2002.fisherfinder.location.RotationSensor
-import com.github.ebrooks2002.fisherfinder.model.DataPersistenceManager
+import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
 import com.github.ebrooks2002.fisherfinder.model.Message
 import com.github.ebrooks2002.fisherfinder.model.NavigationState
-import com.github.ebrooks2002.fisherfinder.model.getCurrentSpeed
-import com.github.ebrooks2002.fisherfinder.model.getFreshnessColor
+import com.github.ebrooks2002.fisherfinder.data.getCurrentSpeed
+import com.github.ebrooks2002.fisherfinder.data.getFreshnessColor
 import kotlin.math.round
 
 sealed interface FisherFinderUiState {
-    data class Success(val assetData: AssetData) : FisherFinderUiState
+    data class Success(val assetData: AssetData?) : FisherFinderUiState
     data class Error(val assetData: AssetData) : FisherFinderUiState
     object Loading : FisherFinderUiState
 }
@@ -38,8 +45,7 @@ sealed interface FisherFinderUiState {
  *
  * @author E. Brooks
  */
-
-class FisherFinderViewModel : ViewModel(){
+class FisherFinderViewModel(assetRepository: AssetRepository) : ViewModel() {
     var fisherFinderUiState: FisherFinderUiState by mutableStateOf(FisherFinderUiState.Loading)
         private set
     var userLocation: Location? by mutableStateOf(null)
@@ -49,7 +55,9 @@ class FisherFinderViewModel : ViewModel(){
     var selectedAssetName by mutableStateOf<String?>(null)
         private set
 
+
     private val dataPersistenceManager: DataPersistenceManager = DataPersistenceManager()
+
     private var lastRequestTime: Long = 0
     private val locUpdateInterval = 3000L // user location updates every 3 seconds.
     val headingDirection: String
@@ -80,10 +88,9 @@ class FisherFinderViewModel : ViewModel(){
                         loc.altitude.toFloat(),
                         System.currentTimeMillis()
                     )
-                    val adjustedRotation = (rotation + field.declination +360f) % 360f
+                    val adjustedRotation = (rotation + field.declination + 360f) % 360f
                     userRotation = adjustedRotation
-                }
-                else {
+                } else {
                     userRotation = rotation
                 }
             }
@@ -115,106 +122,80 @@ class FisherFinderViewModel : ViewModel(){
     /**
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
-    fun getAssetData(context: Context) {
+    fun getAssetData(assetRepository: AssetRepository, context: Context) {
         val FIVE_MINUTES_MS = 5 * 60 * 1000
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastRequestTime < FIVE_MINUTES_MS) { return }
+        if (currentTime - lastRequestTime < FIVE_MINUTES_MS) {
+            return
+        }
         lastRequestTime = currentTime
         viewModelScope.launch {
             fisherFinderUiState = FisherFinderUiState.Loading
-            fisherFinderUiState = try {
-                val allMessages = mutableListOf<Message>()
-                var listResult: AssetData? = null
-                for (i in 0..4) {
-                    val start = i * 50
-                    val result = SPOTApi.retrofitService.getData(start = start)
-                    dataPersistenceManager.saveDataToDisk(context = context, result)
-                    if (listResult == null) {
-                        listResult = result
-                    }
-                    val messages = result.feedMessageResponse?.messages?.list ?: emptyList()
-                    allMessages.addAll(messages)
-                    if (messages.size < 50) break
-                }
-                if (listResult != null) {
-                    listResult.feedMessageResponse?.messages?.list = allMessages
-                    Log.d("BuoyDebug", "Final combined count being sent to UI: ${allMessages.size}")
-                    FisherFinderUiState.Success(listResult)
-                }
-                else {
-                    val cached = dataPersistenceManager.loadDataFromDisk(context)
-                    FisherFinderUiState.Error(cached ?: AssetData())
-                }
-            } catch (e: HttpException) {
-                Log.e("BuoyViewModel", "Network request failed: ${e.code()} ${e.message()}", e)
-                val cached = dataPersistenceManager.loadDataFromDisk(context)
-                FisherFinderUiState.Error(cached ?: AssetData())
-            } catch (e: Exception) {
-                Log.e("BuoyViewModel", "Error fetching message ${e.message}", e)
-                val cached = dataPersistenceManager.loadDataFromDisk(context)
-                FisherFinderUiState.Error(cached ?: AssetData())
-            }
+            val listResult = assetRepository.fetchData(dataPersistenceManager, context)
+            fisherFinderUiState = FisherFinderUiState.Success(listResult)
         }
     }
+        fun selectAsset(name: String) {
+            selectedAssetName = name
+        }
 
-
-
-    fun selectAsset(name: String) {
-        selectedAssetName = name
-    }
-
-    /**
-     * Processes raw AssetData and returns a NavigationState data object
-     */
-    fun processAssetData(assetData: AssetData): NavigationState {
-        val messageList = assetData.feedMessageResponse?.messages?.list ?: emptyList()
-        var assetSpeedDisplay = "0.00 Knots"
-        val assetHistory = messageList
-            .filter { it.messengerName == selectedAssetName }
-            .sortedByDescending { it.parseDate()?.time ?: 0L }
-        if (assetHistory.size >= 2) {
-            val latest = assetHistory[0]
-            val previous = assetHistory[1]
-            val currentSpeed = getCurrentSpeed(latest, previous)
-            if (currentSpeed > 0.0) {
-                assetSpeedDisplay = "%.2f knots".format(currentSpeed)
+        /**
+         * Processes raw AssetData and returns a NavigationState data object
+         */
+        fun processAssetData(assetData: AssetData): NavigationState {
+            val messageList = assetData.feedMessageResponse?.messages?.list ?: emptyList()
+            var assetSpeedDisplay = "0.00 Knots"
+            val assetHistory = messageList
+                .filter { it.messengerName == selectedAssetName }
+                .sortedByDescending { it.parseDate()?.time ?: 0L }
+            if (assetHistory.size >= 2) {
+                val latest = assetHistory[0]
+                val previous = assetHistory[1]
+                val currentSpeed = getCurrentSpeed(latest, previous)
+                if (currentSpeed > 0.0) {
+                    assetSpeedDisplay = "%.2f knots".format(currentSpeed)
+                }
+            } else {
+                assetSpeedDisplay = "Calculating..."
             }
-        } else {
-            assetSpeedDisplay = "Calculating..."
-        }
-        val latestMessagesPerAsset = messageList.distinctBy { it.messengerName }
-        val uniqueAssets = messageList.mapNotNull { it.messengerName }.distinct().sorted()
-        if (selectedAssetName == null && uniqueAssets.isNotEmpty()) {
-            selectedAssetName = uniqueAssets.first()
-        }
-        val selectedMessage = messageList.find { it.messengerName == selectedAssetName }
-        val time = selectedMessage?.parseDate()
-        val now = System.currentTimeMillis()
-        var myHeading: Float? by mutableStateOf(null)
-        var bearingToBuoy = 0f
-        val diffMinutes = if (time != null) {
-            (now - time.time) / (1000 * 60)
-        } else {
-            Long.MAX_VALUE // If no date, treat as "very old"
-        }
-        val color = getFreshnessColor(diffMinutes)
-        val displayName = selectedMessage?.messengerName?.substringAfterLast("_") ?: "Select an Asset"
-        val position = selectedMessage?.let {"Lat: ${it.latitude},\nLong: ${it.longitude}"} ?: "Position unavailable"
-        var temaToAsset = 0f
-        var assetPosition = Location("Asset")
-
-        var userToAsset = 0f
-        var gpsInfo: AnnotatedString = buildAnnotatedString { append("Waiting for GPS...") }
-        if (userLocation != null && selectedMessage != null) {
-            assetPosition = Location("Asset").apply { latitude = selectedMessage.latitude; longitude = selectedMessage.longitude}
-            val temaPortCoords = Location("Tema Harbour").apply { latitude = 5.63438; longitude = 0.01674 }
-            userToAsset = userLocation!!.distanceTo(assetPosition) / 1000
-            temaToAsset = temaPortCoords.distanceTo(assetPosition) / 1000
-            bearingToBuoy = userLocation!!.bearingTo(assetPosition)
-            if (userLocation!!.hasSpeed() && userLocation!!.speed > 0.5f) {
-                myHeading = userLocation!!.bearing
+            val latestMessagesPerAsset = messageList.distinctBy { it.messengerName }
+            val uniqueAssets = messageList.mapNotNull { it.messengerName }.distinct().sorted()
+            if (selectedAssetName == null && uniqueAssets.isNotEmpty()) {
+                selectedAssetName = uniqueAssets.first()
             }
-        }
+            val selectedMessage = messageList.find { it.messengerName == selectedAssetName }
+            val time = selectedMessage?.parseDate()
+            val now = System.currentTimeMillis()
+            var myHeading: Float? by mutableStateOf(null)
+            var bearingToBuoy = 0f
+            val diffMinutes = if (time != null) {
+                (now - time.time) / (1000 * 60)
+            } else {
+                Long.MAX_VALUE // If no date, treat as "very old"
+            }
+            val color = getFreshnessColor(diffMinutes)
+            val displayName =
+                selectedMessage?.messengerName?.substringAfterLast("_") ?: "Select an Asset"
+            val position = selectedMessage?.let { "Lat: ${it.latitude},\nLong: ${it.longitude}" }
+                ?: "Position unavailable"
+            var temaToAsset = 0f
+            var assetPosition = Location("Asset")
+
+            var userToAsset = 0f
+            var gpsInfo: AnnotatedString = buildAnnotatedString { append("Waiting for GPS...") }
+            if (userLocation != null && selectedMessage != null) {
+                assetPosition = Location("Asset").apply {
+                    latitude = selectedMessage.latitude; longitude = selectedMessage.longitude
+                }
+                val temaPortCoords =
+                    Location("Tema Harbour").apply { latitude = 5.63438; longitude = 0.01674 }
+                userToAsset = userLocation!!.distanceTo(assetPosition) / 1000
+                temaToAsset = temaPortCoords.distanceTo(assetPosition) / 1000
+                bearingToBuoy = userLocation!!.bearingTo(assetPosition)
+                if (userLocation!!.hasSpeed() && userLocation!!.speed > 0.5f) {
+                    myHeading = userLocation!!.bearing
+                }
+            }
             return NavigationState(
                 allMessages = messageList,
                 messages = latestMessagesPerAsset,
@@ -237,4 +218,16 @@ class FisherFinderViewModel : ViewModel(){
                 assetPosition = assetPosition
             )
         }
+    companion object {
+        val Factory: Factory
+            get() = viewModelFactory {
+                initializer {
+                    val application = (this[APPLICATION_KEY] as FisherFinderApplication)
+                    val fisherFinderRepository = application.container.assetDataRepository
+                    FisherFinderViewModel(assetRepository = fisherFinderRepository)
+                }
+            }
     }
+}
+
+

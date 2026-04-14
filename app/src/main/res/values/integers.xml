@@ -1,0 +1,3 @@
+<resources>
+<integer name="max_messages_saved">500 </integer>
+</resources>

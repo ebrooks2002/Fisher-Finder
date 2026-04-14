@@ -1,23 +1,24 @@
-package com.github.ebrooks2002.fisherfinder.model
+package com.github.ebrooks2002.fisherfinder.data
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.res.integerResource
+import com.github.ebrooks2002.fisherfinder.R
+import com.github.ebrooks2002.fisherfinder.model.AssetData
 import org.simpleframework.xml.core.Persister
 import java.io.File
 
 /**
  * Manages the saving and loading of asset data from phone's internal storage
  */
-class DataPersistenceManager {
+class DataPersistenceManager() {
     private val serializer = Persister()
     private val fileName = "asset_data_cache.xml"
     private val MAX_MESSAGES = 500 // Approximately 40-50KB of XML data
-
     fun saveDataToDisk(context: Context, data: AssetData) {
         try {
             // 1. Create a trimmed version of the data
             val trimmedData = trimOldMessages(data)
-
             val file = File(context.filesDir, fileName)
             serializer.write(trimmedData, file)
             Log.d("Persistence", "Saved ${trimmedData.feedMessageResponse?.messages?.list?.size} messages to disk.")
@@ -31,7 +32,6 @@ class DataPersistenceManager {
      */
     private fun trimOldMessages(data: AssetData): AssetData {
         val originalList = data.feedMessageResponse?.messages?.list ?: return data
-
         // Sort by date descending (Newest first) and take the top 250
         val trimmedList = originalList
             .filter { it.parseDate() != null } // Ensure we have a date to sort by

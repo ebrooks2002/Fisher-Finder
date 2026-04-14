@@ -50,6 +50,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults.cardColors
@@ -65,6 +66,9 @@ import com.github.ebrooks2002.fisherfinder.ui.map.OfflineMap
 import com.github.ebrooks2002.fisherfinder.ui.theme.BuoyFinderTheme
 import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderUiState
 import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderViewModel
+import androidx.core.graphics.toColorInt
+import com.github.ebrooks2002.fisherfinder.data.AssetRepository
+import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
 
 
 /**
@@ -82,6 +86,7 @@ import com.github.ebrooks2002.fisherfinder.viewModel.FisherFinderViewModel
  */
 @Composable
 fun HomeScreen(
+    assetRepository: AssetRepository,
     fisherFinderUiState: FisherFinderUiState,
     onGetDataClicked: () -> Unit,
     modifier: Modifier = Modifier, userLocation: Location?,
@@ -90,12 +95,11 @@ fun HomeScreen(
     userDirection: String?,
     onStartRotationUpdates: () -> Unit,
     viewModel: FisherFinderViewModel = viewModel(),
-    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         viewModel.loadCachedData(context)
-        viewModel.getAssetData(context)
+        viewModel.getAssetData(assetRepository = assetRepository, context=context)
     }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -154,7 +158,7 @@ fun ResultScreen(
     error: Boolean
 ) {
     // Everything is processed here in one line
-    val navState = viewModel.processAssetData(assetData)
+    val navState = viewModel.processAssetData(assetData) // bad
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -162,8 +166,7 @@ fun ResultScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 5.dp),
-            horizontalArrangement = Arrangement.Center,
+                .padding(top = 30.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -171,24 +174,28 @@ fun ResultScreen(
                 contentAlignment = Alignment.Center
             ) {
                 DropDownMenu(
+                    modifier = Modifier.padding(),
                     availableAssets = navState.uniqueAssets,
                     onAssetSelected = { viewModel.selectAsset(it) }, // Update selection in VM
                     currentSelection = navState.displayName
                 )
-            }
+        }
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                RefreshFeedButton(onGetDataClicked = onGetDataClicked)
+                RefreshFeedButton(
+                    modifier = Modifier.padding(),
+                    onGetDataClicked = onGetDataClicked
+                )
             }
         }
 
-        if (loading) DisplayRefreshMessage(Color.Gray, "Refreshing data...")
-        if (error) DisplayRefreshMessage(Color.Red, "Offline - Showing last known data")
+        if (loading) DisplayRefreshMessage(Color.Gray, "Refreshing data...") // business logic bad
+        if (error) DisplayRefreshMessage(Color.Red, "Offline - Showing last known data") // business logic bad
 
         // Pass the pre-formatted strings directly
-        DisplayAssetData(
+        DisplayData(
             assetName = navState.displayName,
             position = navState.position,
             outputDateFormat = navState.formattedDate,
@@ -235,7 +242,7 @@ fun DisplayRefreshMessage(color: Color, message: String) {
 }
 
 @Composable
-fun DisplayAssetData(
+fun DisplayData(
     assetName: String,
     movingHeading: Float?,
     bearingToBuoy: Float,
@@ -372,10 +379,10 @@ fun TrackerInfo(assetName: String,
             )
             if (diffMinutes != null) {
                 Text(
-                    text = "(" + diffMinutes.toString() + " min. ago" + ")",
+                    text = "($diffMinutes min. ago)",
                     fontSize = 12.sp,
                     letterSpacing = (-0.5).sp,
-                    color = Color(android.graphics.Color.parseColor(color)) // move import to top.
+                    color = Color(color.toColorInt()) // move import to top.
                 )
             }
         }
@@ -385,7 +392,7 @@ fun TrackerInfo(assetName: String,
                 .fillMaxWidth(),
             fontSize = 15.sp,
             letterSpacing = (-0.5).sp,
-            text = "Speed: " + assetSpeed ?: "none"
+            text = ("Speed: $assetSpeed")
         )
     }
 }
@@ -416,21 +423,6 @@ fun DeviceInfo(
             text = "My Device:"
         )
 
-        val lat = userPosition?.latitude?.let { "%.4f".format(it) } ?: "N/A";
-        val lon = userPosition?.longitude?.let { "%.4f".format(it) } ?: "N/A"
-
-//        Text(
-//            modifier = Modifier
-//                .padding(start=4.dp),
-//            fontSize = 15.sp,
-//            text = "Lat: $lat"
-//        )
-//        Text(
-//            modifier = Modifier
-//                .padding(start=4.dp),
-//            fontSize = 15.sp,
-//            text = "Long $lon"
-//        )
         Text(
             modifier = Modifier
                 .padding(start=4.dp),
@@ -481,11 +473,14 @@ fun DeviceInfo(
 }
 
 @Composable
-fun RefreshFeedButton(onGetDataClicked: () -> Unit) {
+fun RefreshFeedButton(
+    modifier: Modifier = Modifier,
+    onGetDataClicked: () -> Unit) {
     Button(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 2.dp),
         onClick = onGetDataClicked,
-        modifier = Modifier.padding(top = 40.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583))
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583)),
+        shape = RoundedCornerShape(10.dp)
     )
     {
         Text(
@@ -501,21 +496,18 @@ fun RefreshFeedButton(onGetDataClicked: () -> Unit) {
 
 @Composable
 fun DropDownMenu(
+    modifier: Modifier = Modifier,
     availableAssets: List<String>,
     onAssetSelected: (String) -> Unit,
     currentSelection: String?,
-    modifier: Modifier = Modifier,
-
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box(
-        modifier = Modifier.padding(
-            top = 40.dp,
-            start = 5.dp
-        )
-    ) { // Adjust this padding to move it up/down
+    Box()
+     {
         Button(
+            modifier = modifier.fillMaxWidth().padding(horizontal=2.dp),
             onClick = { expanded = true },
+            shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0XFF495583))
         ) {
             Text(text = currentSelection ?: "Select Asset")
@@ -535,7 +527,7 @@ fun DropDownMenu(
 }
 
 @Composable
-fun ErrorLoadingMessage(modifier: Modifier = Modifier, message: String) {
+fun ErrorLoadingMessage(message: String) {
     Box(
         modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
@@ -563,8 +555,10 @@ fun HomeScreenPreview() {
             val viewModel: FisherFinderViewModel = viewModel()
             val context = LocalContext.current
             HomeScreen(
+                assetRepository = AssetRepository(DataPersistenceManager()),
                 fisherFinderUiState = FisherFinderUiState.Success(AssetData()),
-                onGetDataClicked = { viewModel.getAssetData(context) },
+                onGetDataClicked = { viewModel.getAssetData(assetRepository = AssetRepository(DataPersistenceManager()
+                ),context) },
                 userLocation = viewModel.userLocation,
                 onStartLocationUpdates = {
                     viewModel.startLocationTracking(context)
