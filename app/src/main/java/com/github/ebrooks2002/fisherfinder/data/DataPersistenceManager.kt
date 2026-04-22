@@ -11,11 +11,11 @@ import java.io.File
 /**
  * Manages the saving and loading of asset data from phone's internal storage
  */
-class DataPersistenceManager() {
+class DataPersistenceManager(val context: Context) {
     private val serializer = Persister()
     private val fileName = "asset_data_cache.xml"
     private val MAX_MESSAGES = 500 // Approximately 40-50KB of XML data
-    fun saveDataToDisk(context: Context, data: AssetData) {
+    fun saveDataToDisk(data: AssetData) {
         try {
             // 1. Create a trimmed version of the data
             val trimmedData = trimOldMessages(data)
@@ -44,7 +44,7 @@ class DataPersistenceManager() {
         return data
     }
 
-    fun loadDataFromDisk(context: Context): AssetData?{
+    fun loadDataFromDisk(): AssetData?{
         return try {
             val file = File(context.filesDir, fileName)
             if (file.exists()) {

@@ -1,8 +1,12 @@
 package com.github.ebrooks2002.fisherfinder.di
 
 import android.app.Application
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import com.github.ebrooks2002.fisherfinder.data.AssetRepository
 import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
+import com.github.ebrooks2002.fisherfinder.location.LocationFinder
+import com.github.ebrooks2002.fisherfinder.location.RotationSensor
 import com.github.ebrooks2002.fisherfinder.network.SPOTApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -11,9 +15,11 @@ import retrofit2.converter.simplexml.SimpleXmlConverterFactory
 
 interface AppContainer{
     val assetDataRepository: AssetRepository
+    val locationFinder: LocationFinder
+    val rotationSensor: RotationSensor
 }
 
-class DefaultAppContainer: AppContainer {
+class DefaultAppContainer(val context: Context): AppContainer {
 
     private  val FEED_ID = "0r0YXhJmCiRJpmmJiaAdr6Ez6VIhahnMu"
     private val BASE_URL =
@@ -30,12 +36,14 @@ class DefaultAppContainer: AppContainer {
         .addConverterFactory(SimpleXmlConverterFactory.create())
         .client(client)
         .build()
-    val dataPersistenceManager = DataPersistenceManager()
+    val dataPersistenceManager = DataPersistenceManager(context)
+
+    override val locationFinder = LocationFinder(context)
+    override val rotationSensor = RotationSensor(context)
 
     override val assetDataRepository: AssetRepository by lazy {
         AssetRepository(retrofitService = retrofitService, dataPersistenceManager=dataPersistenceManager)
     }
-
     val retrofitService: SPOTApiService by lazy {
         retrofit.create(SPOTApiService::class.java)
     }

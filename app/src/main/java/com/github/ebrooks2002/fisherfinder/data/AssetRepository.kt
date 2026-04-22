@@ -14,7 +14,7 @@ class AssetRepository(
      * the disk for offline use. If the .getDat() request fails,
      * we load data from disk and return cached.
      */
-    suspend fun fetchData(context: Context): AssetData? {
+    suspend fun fetchData(): AssetData? {
         var listResult: AssetData? = null
         val allMessages = mutableListOf<Message>()
         for (i in 0..2) {
@@ -24,11 +24,11 @@ class AssetRepository(
                 listResult = result
                 val messages = result?.feedMessageResponse?.messages?.list ?: emptyList()
                 allMessages.addAll(messages)
-                dataPersistenceManager.saveDataToDisk(context = context, data = result)
+                dataPersistenceManager.saveDataToDisk(data = result)
                 if (messages.size < 50) break
                 return result
             } catch (e: Exception) {
-                val cached = dataPersistenceManager.loadDataFromDisk(context = context)
+                val cached = dataPersistenceManager.loadDataFromDisk()
                 if (cached != null) {
                     return cached
                 } else {

@@ -52,7 +52,7 @@ class RotationSensor (private val context: Context) {
                 }
             }
         }
-        client.registerListener(sensorListener, rotationVector, SensorManager.SENSOR_DELAY_UI)
+        client.registerListener(sensorListener, rotationVector, SensorManager.SENSOR_DELAY_GAME)
 
         awaitClose {
             client.unregisterListener(sensorListener)

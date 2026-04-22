@@ -2,7 +2,6 @@ package com.github.ebrooks2002.fisherfinder.viewModel
 
 import android.content.Context
 import android.hardware.GeomagneticField
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,11 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.ebrooks2002.fisherfinder.model.AssetData
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 import android.location.Location
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.ViewModelProvider.Factory
 import androidx.lifecycle.viewmodel.initializer
@@ -24,7 +21,6 @@ import com.github.ebrooks2002.fisherfinder.data.AssetRepository
 import com.github.ebrooks2002.fisherfinder.location.LocationFinder
 import com.github.ebrooks2002.fisherfinder.location.RotationSensor
 import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
-import com.github.ebrooks2002.fisherfinder.model.Message
 import com.github.ebrooks2002.fisherfinder.model.NavigationState
 import com.github.ebrooks2002.fisherfinder.data.getCurrentSpeed
 import com.github.ebrooks2002.fisherfinder.data.getFreshnessColor
@@ -44,7 +40,11 @@ sealed interface FisherFinderUiState {
  *
  * @author E. Brooks
  */
-class FisherFinderViewModel(val assetRepository: AssetRepository) : ViewModel() {
+class FisherFinderViewModel(
+    val assetRepository: AssetRepository,
+    val locationFinder: LocationFinder,
+    val rotationSensor: RotationSensor,
+) : ViewModel() {
     var fisherFinderUiState: FisherFinderUiState by mutableStateOf(FisherFinderUiState.Loading)
         private set
     var userLocation: Location? by mutableStateOf(null)
@@ -53,7 +53,6 @@ class FisherFinderViewModel(val assetRepository: AssetRepository) : ViewModel() 
         private set
     var selectedAssetName by mutableStateOf<String?>(null)
         private set
-    private val dataPersistenceManager: DataPersistenceManager = DataPersistenceManager()
     private var lastRequestTime: Long = 0
     private val locUpdateInterval = 3000L // user location updates every 3 seconds.
     val headingDirection: String
@@ -67,13 +66,10 @@ class FisherFinderViewModel(val assetRepository: AssetRepository) : ViewModel() 
 
     /**
      * Collects the flow from getRotationUpdates and updates userRotation.
-     *
-     * @param context The application context to retrieve the SensorManager object.
      */
-    fun startRotationTracking(context: Context) {
-        val rotationClient = RotationSensor(context)
+    fun startRotationTracking() {
         viewModelScope.launch {
-            rotationClient.getRotationUpdates().collect { rotation ->
+            rotationSensor.getRotationUpdates().collect { rotation ->
                 val loc = userLocation
                 if (loc != null) {
                     val field = GeomagneticField(
@@ -93,30 +89,20 @@ class FisherFinderViewModel(val assetRepository: AssetRepository) : ViewModel() 
 
     /**
      * Collects the flow from getLocationUpdates and updates userLocation.
-     *
-     * @param context The application context to retrieve the LocationServices object.
      */
-    fun startLocationTracking(context: Context) {
-        val locationClient = LocationFinder(context)
+    fun startLocationTracking() {
         viewModelScope.launch {
-            // Update every 2 seconds (2000ms)
-            locationClient.getLocationUpdates(locUpdateInterval).collect { location ->
+            locationFinder.getLocationUpdates(locUpdateInterval).collect { location ->
                 userLocation = location
             }
         }
     }
 
-    fun loadCachedData(context: Context) {
-        val cached = dataPersistenceManager.loadDataFromDisk(context)
-        if (cached != null) {
-            fisherFinderUiState = FisherFinderUiState.Success(cached)
-        }
-    }
 
     /**
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
-    fun getAssetData(context: Context) {
+    fun getAssetData() {
         val FIVE_MINUTES_MS = 5 * 60 * 1000
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastRequestTime < FIVE_MINUTES_MS) {
@@ -125,7 +111,7 @@ class FisherFinderViewModel(val assetRepository: AssetRepository) : ViewModel() 
         lastRequestTime = currentTime
         viewModelScope.launch {
             fisherFinderUiState = FisherFinderUiState.Loading
-            val listResult = assetRepository.fetchData(context)
+            val listResult = assetRepository.fetchData()
             fisherFinderUiState = FisherFinderUiState.Success(listResult)
         }
     }
@@ -218,7 +204,13 @@ class FisherFinderViewModel(val assetRepository: AssetRepository) : ViewModel() 
                 initializer {
                     val application = (this[APPLICATION_KEY] as FisherFinderApplication)
                     val fisherFinderRepository = application.container.assetDataRepository
-                    FisherFinderViewModel(assetRepository = fisherFinderRepository)
+                    val locationFinder = application.container.locationFinder
+                    val rotationSensor = application.container.rotationSensor
+                    FisherFinderViewModel(
+                        assetRepository = fisherFinderRepository,
+                        locationFinder = locationFinder,
+                        rotationSensor = rotationSensor
+                    )
                 }
             }
     }

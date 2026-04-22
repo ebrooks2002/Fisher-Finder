@@ -31,17 +31,14 @@ fun BuoyFinderApp() {
         color = Color(android.graphics.Color.parseColor("#EFEDE8"))
     ) {
         val fisherFinderViewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory)
-        val context = LocalContext.current
-        val assetRepository = fisherFinderViewModel.assetRepository
         HomeScreen(
-            assetRepository =  assetRepository ,
             fisherFinderUiState = fisherFinderViewModel.fisherFinderUiState,
-            onGetDataClicked = { fisherFinderViewModel.getAssetData(context) },
+            onGetDataClicked = { fisherFinderViewModel.getAssetData() },
             userLocation = fisherFinderViewModel.userLocation,
-            onStartLocationUpdates = { fisherFinderViewModel.startLocationTracking(context) },
+            onStartLocationUpdates = { fisherFinderViewModel.startLocationTracking() },
             userRotation = fisherFinderViewModel.userRotation,
             userDirection = fisherFinderViewModel.headingDirection,
-            onStartRotationUpdates = { fisherFinderViewModel.startRotationTracking(context) }
+            onStartRotationUpdates = { fisherFinderViewModel.startRotationTracking() }
         )
     }
 }

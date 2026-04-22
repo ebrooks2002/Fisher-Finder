@@ -87,7 +87,6 @@ import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
  */
 @Composable
 fun HomeScreen(
-    assetRepository: AssetRepository,
     fisherFinderUiState: FisherFinderUiState,
     onGetDataClicked: () -> Unit,
     modifier: Modifier = Modifier, userLocation: Location?,
@@ -97,10 +96,8 @@ fun HomeScreen(
     onStartRotationUpdates: () -> Unit,
     viewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory),
 ) {
-    val context = LocalContext.current
     LaunchedEffect(Unit) {
-        viewModel.loadCachedData(context)
-        viewModel.getAssetData(context=context)
+        viewModel.getAssetData()
     }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -554,19 +551,17 @@ fun HomeScreenPreview() {
             modifier = Modifier.fillMaxSize()
         ) {
             val viewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory)
-            val context = LocalContext.current
             HomeScreen(
-                assetRepository = viewModel.assetRepository,
                 fisherFinderUiState = FisherFinderUiState.Success(AssetData()),
-                onGetDataClicked = { viewModel.getAssetData(context) },
+                onGetDataClicked = { viewModel.getAssetData() },
                 userLocation = viewModel.userLocation,
                 onStartLocationUpdates = {
-                    viewModel.startLocationTracking(context)
+                    viewModel.startLocationTracking()
                 },
                 userRotation = viewModel.userRotation,
                 userDirection = viewModel.headingDirection,
                 onStartRotationUpdates = {
-                    viewModel.startRotationTracking(context)
+                    viewModel.startRotationTracking()
                 }
             )
         }
