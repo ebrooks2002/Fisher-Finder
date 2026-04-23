@@ -1,167 +1,78 @@
-/**
- *
- * Define data classes to parse XML Response and assign to data objects.
- * Uses SimpleXML library's annotated classes.
- *
- * @author Ethan Brooks
- */
-
 package com.github.ebrooks2002.fisherfinder.model
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
 
-import org.simpleframework.xml.Element
-import org.simpleframework.xml.ElementList
-import org.simpleframework.xml.Root
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
+@Serializable
+data class AssetData(
+    // The JSON starts with {"response": {...}}
+    @SerialName("response")
+    val response: FeedResponseWrapper
+)
+@Serializable
+data class FeedResponseWrapper(
+    // Level 2: Handles {"feedMessageResponse": ...}
+    val feedMessageResponse: FeedMessageResponse
+)
 
-@Root(name = "message", strict = false)
+@Serializable
+data class FeedMessageResponse(
+    val count: Int = 0,
+    val totalCount: Int = 0,
+    val feed: Feed? = null,
+    val messages: Messages? = null
+)
+
+@Serializable
+data class Messages(
+    // In your JSON, the array is under the key "message"
+    @SerialName("message")
+    var list: List<Message> = emptyList()
+)
+
+@Serializable
 data class Message(
-    @field:Element(name = "id", required = false)
-    var id: Long = 0,
-
-    @field:Element(name = "messengerId", required = false)
-    var messengerId: String = "",
-
-    @field:Element(name = "messengerName", required = false)
-    var messengerName: String = "",
-
-    @field:Element(name = "unixTime", required = false)
-    var unixTime: Long = 0,
-
-    @field:Element(name = "messageType", required = false)
-    var messageType: String = "",
-
-    @field:Element(name = "latitude", required = false)
-    var latitude: Double = 0.0,
-
-    @field:Element(name = "longitude", required = false)
-    var longitude: Double = 0.0,
-
-    @field:Element(name = "modelId", required = false)
-    var modelId: String = "",
-
-    @field:Element(name = "showCustomMsg", required = false)
-    var showCustomMsg: String = "",
-
-    @field:Element(name = "dateTime", required = false)
-    var dateTime: String = "",
-
-    @field:Element(name = "batteryState", required = false)
-    var batteryState: String = "",
-
-    @field:Element(name = "hidden", required = false)
-    var hidden: Int = 0,
-
-    @field:Element(name = "altitude", required = false)
-    var altitude: Int = 0,
-
-    @field:Element(name = "messageContent", required = false)
-    var messageContent: String = ""
+    val id: Long = 0,
+    val messengerId: String = "",
+    val messengerName: String = "",
+    val unixTime: Long = 0,
+    val messageType: String = "",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val dateTime: String = "",
+    val batteryState: String = "",
+    val altitude: Int = 0
 ) {
     fun parseDate(): java.util.Date? {
-        return if (dateTime.isNotBlank()) {
-            try {
-                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US).parse(dateTime)
-            } catch (e: Exception) {
-                null
-            }
-        } else {
+        if (dateTime.isBlank()) return null
+        return try {
+            // This format matches the JSON date: 2026-04-22T19:39:44+0000
+            java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", java.util.Locale.US).parse(dateTime)
+        } catch (e: Exception) {
             null
         }
     }
-
     val formattedDate: String
         get() {
             val date = parseDate() ?: return "Date not available"
-            // Changed pattern from "MMM dd, yyyy" to "MM/dd/yyyy"
-            val formatter = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
-            formatter.timeZone = TimeZone.getTimeZone("Africa/Accra") // Ghana Time
+            val formatter = java.text.SimpleDateFormat("MM/dd/yyyy", java.util.Locale.getDefault())
+            formatter.timeZone = java.util.TimeZone.getTimeZone("Africa/Accra")
             return formatter.format(date)
         }
 
     val formattedTime: String
         get() {
             val date = parseDate() ?: return "Time not available"
-            val formatter = SimpleDateFormat("HH:mm", Locale.getDefault()) // Military Time
-            formatter.timeZone = TimeZone.getTimeZone("Africa/Accra") // Ghana Time
+            val formatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+            formatter.timeZone = java.util.TimeZone.getTimeZone("Africa/Accra")
             return "${formatter.format(date)} GMT"
         }
 }
+    // Keep your parseDate(), formattedDate, and formattedTime functions here
 
-@Root(name = "messages", strict = false)
-data class Messages(
-    @field:ElementList(inline = true, entry = "message", required = false)
-    var list: List<Message>? = null
-)
 
-@Root(name = "feed", strict = false)
+@Serializable
 data class Feed(
-    @field:Element(name = "id", required = false)
-    var id: String = "",
-
-    @field:Element(name = "name", required = false)
-    var name: String = "",
-
-    @field:Element(name = "description", required = false)
-    var description: String = "",
-
-    @field:Element(name = "status", required = false)
-    var status: String = "",
-
-    @field:Element(name = "usage", required = false)
-    var usage: Int = 0,
-
-    @field:Element(name = "daysRange", required = false)
-    var daysRange: Int = 0,
-
-    @field:Element(name = "detailedMessageShown", required = false)
-    var detailedMessageShown: Boolean = false,
-
-    @field:Element(name = "type", required = false)
-    var type: String = ""
-)
-
-@Root(name = "feedMessageResponse", strict = false)
-data class FeedMessageResponse(
-    @field:Element(name = "count", required = false)
-    var count: Int = 0,
-
-    @field:Element(name = "feed", required = false)
-    var feed: Feed? = null,
-
-    @field:Element(name = "totalCount", required = false)
-    var totalCount: Int = 0,
-
-    @field:Element(name = "activityCount", required = false)
-    var activityCount: Int = 0,
-
-    @field:Element(name = "messages", required = false)
-    var messages: Messages? = null
-)
-
-@Root(name = "response", strict = false)
-data class AssetData(
-    @field:Element(name = "feedMessageResponse", required = false)
-    var feedMessageResponse: FeedMessageResponse? = null,
-
-    // Optional error handling just in case
-    @field:Element(name = "errors", required = false)
-    var errors: ApiErrors? = null
-)
-
-@Root(name = "errors", strict = false)
-data class ApiErrors(
-    @field:Element(name = "error", required = false)
-    var error: ApiError? = null
-)
-
-@Root(name = "error", strict = false)
-data class ApiError(
-    @field:Element(name = "code", required = false)
-    var code: String = "",
-    @field:Element(name = "text", required = false)
-    var text: String = "",
-    @field:Element(name = "description", required = false)
-    var description: String = ""
+    val id: String = "",
+    val name: String = "",
+    val status: String = ""
 )

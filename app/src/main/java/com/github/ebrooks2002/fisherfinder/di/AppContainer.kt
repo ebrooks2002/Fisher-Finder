@@ -1,17 +1,17 @@
 package com.github.ebrooks2002.fisherfinder.di
 
-import android.app.Application
 import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import com.github.ebrooks2002.fisherfinder.data.AssetRepository
 import com.github.ebrooks2002.fisherfinder.data.DataPersistenceManager
 import com.github.ebrooks2002.fisherfinder.location.LocationFinder
 import com.github.ebrooks2002.fisherfinder.location.RotationSensor
 import com.github.ebrooks2002.fisherfinder.network.SPOTApiService
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.simplexml.SimpleXmlConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 interface AppContainer{
     val assetDataRepository: AssetRepository
@@ -31,9 +31,13 @@ class DefaultAppContainer(val context: Context): AppContainer {
         .addInterceptor(logger)
         .build()
 
+    private val json = Json {
+        ignoreUnknownKeys = true // If the API sends extra fields, your app won't crash
+    }
+
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
-        .addConverterFactory(SimpleXmlConverterFactory.create())
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .client(client)
         .build()
     val dataPersistenceManager = DataPersistenceManager(context)
@@ -42,7 +46,7 @@ class DefaultAppContainer(val context: Context): AppContainer {
     override val rotationSensor = RotationSensor(context)
 
     override val assetDataRepository: AssetRepository by lazy {
-        AssetRepository(retrofitService = retrofitService, dataPersistenceManager=dataPersistenceManager)
+        AssetRepository(retrofitService = retrofitService, dataPersistenceManager = dataPersistenceManager)
     }
     val retrofitService: SPOTApiService by lazy {
         retrofit.create(SPOTApiService::class.java)

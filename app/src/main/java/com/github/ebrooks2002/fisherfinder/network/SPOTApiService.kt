@@ -15,7 +15,7 @@ interface SPOTApiService {
     /**
      * Returns an asset data object containing XML feed data.
      */
-    @GET("message.xml")
+    @GET("message.json")
     suspend fun getData(
         @Query("count") count: Int = 50,
         @Query("start") start: Int = 0

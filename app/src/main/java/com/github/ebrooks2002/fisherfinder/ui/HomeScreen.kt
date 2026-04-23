@@ -138,13 +138,14 @@ fun HomeScreen(
             loading = fisherFinderUiState is FisherFinderUiState.Loading,
             error = fisherFinderUiState is FisherFinderUiState.Error
         )
-    } else {
-        when (fisherFinderUiState) {
-            is FisherFinderUiState.Loading -> ErrorLoadingMessage(message = "Loading")
-            is FisherFinderUiState.Error -> ErrorLoadingMessage(message = "Error Fetching Data")
-            else -> {}
-        }
     }
+
+    when (fisherFinderUiState) {
+        is FisherFinderUiState.Loading -> ErrorLoadingMessage(message = "Loading")
+        is FisherFinderUiState.Error -> ErrorLoadingMessage(message = "Error Fetching Data")
+        else -> {}
+    }
+
 }
 
 @Composable
@@ -539,31 +540,32 @@ fun ErrorLoadingMessage(message: String) {
     }
 }
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    device = "id:pixel_5"
-)
-@Composable
-fun HomeScreenPreview() {
-    BuoyFinderTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            val viewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory)
-            HomeScreen(
-                fisherFinderUiState = FisherFinderUiState.Success(AssetData()),
-                onGetDataClicked = { viewModel.getAssetData() },
-                userLocation = viewModel.userLocation,
-                onStartLocationUpdates = {
-                    viewModel.startLocationTracking()
-                },
-                userRotation = viewModel.userRotation,
-                userDirection = viewModel.headingDirection,
-                onStartRotationUpdates = {
-                    viewModel.startRotationTracking()
-                }
-            )
-        }
-    }
-}
+//
+//@Preview(
+//    showBackground = true,
+//    showSystemUi = true,
+//    device = "id:pixel_5"
+//)
+//@Composable
+//fun HomeScreenPreview() {
+//    BuoyFinderTheme {
+//        Surface(
+//            modifier = Modifier.fillMaxSize()
+//        ) {
+//            val viewModel: FisherFinderViewModel = viewModel(factory = FisherFinderViewModel.Factory)
+//            HomeScreen(
+//                fisherFinderUiState = FisherFinderUiState.Success(AssetData()),
+//                onGetDataClicked = { viewModel.getAssetData() },
+//                userLocation = viewModel.userLocation,
+//                onStartLocationUpdates = {
+//                    viewModel.startLocationTracking()
+//                },
+//                userRotation = viewModel.userRotation,
+//                userDirection = viewModel.headingDirection,
+//                onStartRotationUpdates = {
+//                    viewModel.startRotationTracking()
+//                }
+//            )
+//        }
+//    }
+//}

@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.ebrooks2002.fisherfinder.model.AssetData
 import kotlinx.coroutines.launch
 import android.location.Location
+import android.util.Log
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -103,6 +104,7 @@ class FisherFinderViewModel(
      * Launches a coroutine to asynchronously retrieve and hold asset data, while tracking UI State.
      */
     fun getAssetData() {
+        Log.d("launched", "yaa")
         val FIVE_MINUTES_MS = 5 * 60 * 1000
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastRequestTime < FIVE_MINUTES_MS) {
@@ -123,7 +125,7 @@ class FisherFinderViewModel(
      * Processes raw AssetData and returns a NavigationState data object
      */
     fun processAssetData(assetData: AssetData): NavigationState {
-        val messageList = assetData.feedMessageResponse?.messages?.list ?: emptyList()
+        val messageList = assetData.response.feedMessageResponse.messages?.list ?: emptyList()
         var assetSpeedDisplay = "0.00 Knots"
         val assetHistory = messageList
             .filter { it.messengerName == selectedAssetName }

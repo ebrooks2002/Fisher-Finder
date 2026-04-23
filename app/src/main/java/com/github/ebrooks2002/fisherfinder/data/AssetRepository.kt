@@ -1,6 +1,7 @@
 package com.github.ebrooks2002.fisherfinder.data
 
 import android.content.Context
+import android.util.Log
 import com.github.ebrooks2002.fisherfinder.model.AssetData
 import com.github.ebrooks2002.fisherfinder.model.Message
 import com.github.ebrooks2002.fisherfinder.network.SPOTApiService
@@ -11,7 +12,7 @@ class AssetRepository(
 
     /**
      * Tries to fetch call .getData(), saves result to disk, the loads the data to
-     * the disk for offline use. If the .getDat() request fails,
+     * the disk for offline use. If the .getData() request fails,
      * we load data from disk and return cached.
      */
     suspend fun fetchData(): AssetData? {
@@ -20,23 +21,22 @@ class AssetRepository(
         for (i in 0..2) {
             val start = i * 50
             try {
+                Log.d("result1", "sweartogodbruh")
                 val result = retrofitService.getData(start = start)
                 listResult = result
-                val messages = result?.feedMessageResponse?.messages?.list ?: emptyList()
+                Log.d("result", listResult.toString())
+                val messages = result.response.feedMessageResponse.messages?.list ?: emptyList()
                 allMessages.addAll(messages)
                 dataPersistenceManager.saveDataToDisk(data = result)
                 if (messages.size < 50) break
                 return result
             } catch (e: Exception) {
+                Log.d("error", e.toString())
                 val cached = dataPersistenceManager.loadDataFromDisk()
-                if (cached != null) {
-                    return cached
-                } else {
-                    return null
-                }
+                return cached
             }
-            listResult?.feedMessageResponse?.messages?.list = allMessages
         }
+
         return listResult
     }
 

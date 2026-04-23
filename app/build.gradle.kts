@@ -54,13 +54,12 @@ dependencies {
     implementation(libs.play.services.location)
     implementation("org.maplibre.gl:android-sdk-geojson:6.0.0")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-simplexml:2.9.0")
-    implementation("org.simpleframework:simple-xml:2.7.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("org.maplibre.gl:android-sdk:11.8.0") // Check for latest version
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
+    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
 
 
     implementation(libs.androidx.compose.foundation)
