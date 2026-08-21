@@ -4,6 +4,8 @@ Fisher Finder, developed for Android, is a lightweight mobile app to assist user
 
 Why use Fisher Finder? First, SPOT’s mobile app does not display the user’s GPS location, meaning users cannot see their relative distance or heading to a TRACE device. Also, Fisher Finder allows device data to be kept for offline use. When a user leaves an area with cell coverage, the app continues functioning using last received TRACE device data.
 
+For context: https://www.uri.edu/news/2024/06/uri-graduate-school-of-oceanographys-melissa-omand-to-receive-funding-for-ocean-margins-initiative-in-ghana/
+
 ## Getting Started:
 
 1. Download the app-debug.apk from the releases section on the right. 
